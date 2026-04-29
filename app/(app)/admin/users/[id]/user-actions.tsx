@@ -49,6 +49,11 @@ export function UserActions({ user }: { user: User }) {
     setCooldownOpen(false); setReason("");
   }
 
+  function clearUserTrades() {
+    if (!confirm(`Delete ALL trades for ${user.email}? This cannot be undone.`)) return;
+    call("clear_trades");
+  }
+
   return (
     <div className="flex flex-wrap gap-2">
       <Select value={user.role} onValueChange={(role) => call("set_role", { role })} disabled={isPending}>
@@ -63,10 +68,12 @@ export function UserActions({ user }: { user: User }) {
         <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="free">Free</SelectItem>
-          <SelectItem value="pro">Pro</SelectItem>
           <SelectItem value="premium">Premium</SelectItem>
         </SelectContent>
       </Select>
+      <Button variant="outline" size="sm" onClick={clearUserTrades} disabled={isPending} className="border-destructive/50 text-destructive hover:bg-destructive/10">
+        <Trash2 className="mr-1 h-3.5 w-3.5" />Clear Trades
+      </Button>
       <Dialog open={cooldownOpen} onOpenChange={setCooldownOpen}>
         <DialogTrigger asChild><Button variant="outline" size="sm" disabled={isPending}><Clock className="mr-1 h-3.5 w-3.5" />Cooldown</Button></DialogTrigger>
         <DialogContent>

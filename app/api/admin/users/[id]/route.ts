@@ -27,9 +27,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       await logAdminAction(auth.profile.id, "set_role", id, { role });
       return NextResponse.json({ message: `Role updated to ${role}` });
     }
+    case "clear_trades":
+      await sb.from("trades").delete().eq("user_id", id);
+      await logAdminAction(auth.profile.id, "clear_trades", id);
+      return NextResponse.json({ message: "All trades deleted" });
     case "set_plan": {
       const plan = body.plan as string;
-      if (!["free", "pro", "premium"].includes(plan)) return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+      if (!["free", "premium"].includes(plan)) return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
       await sb.from("profiles").update({ plan }).eq("id", id);
       await sb.from("subscriptions").upsert({ user_id: id, plan, status: plan === "free" ? "inactive" : "active" }, { onConflict: "user_id" });
       await logAdminAction(auth.profile.id, "set_plan", id, { plan });

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Trash2, User, Wallet, Settings as SettingsIcon, CreditCard } from "lucide-react";
+import { Plus, Trash2, User, Wallet, Settings as SettingsIcon, CreditCard, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -22,7 +22,8 @@ type Subscription = { plan: string; status: string; current_period_end: string |
 export function SettingsClient({ profile, accounts: initialAccounts, settings, subscription }: { profile: Profile; accounts: Account[]; settings: UserSettings; subscription: Subscription }) {
   const router = useRouter();
   const supabase = createClient();
-  const [tab, setTab] = useState<"profile" | "accounts" | "preferences" | "subscription">("profile");
+  const [tab, setTab] = useState<"profile" | "accounts" | "preferences" | "subscription" | "danger">("profile");
+  const [clearingTrades, setClearingTrades] = useState(false);
   const [accounts, setAccounts] = useState(initialAccounts);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Partial<Account>>({});
@@ -93,6 +94,17 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
     router.refresh();
   }
 
+  async function clearAllTrades() {
+    if (!confirm("Are you sure you want to delete ALL your trades? This cannot be undone.")) return;
+    if (!confirm("Final confirmation — this will permanently delete every trade in your account.")) return;
+    setClearingTrades(true);
+    const { error } = await supabase.from("trades").delete().eq("user_id", profile.id);
+    setClearingTrades(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("All trades deleted");
+    router.refresh();
+  }
+
   return (
     <div className="p-4 md:p-8">
       <div className="mb-6">
@@ -105,6 +117,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
         <TabBtn active={tab === "accounts"} onClick={() => setTab("accounts")}><Wallet className="mr-1 h-3.5 w-3.5" />Accounts</TabBtn>
         <TabBtn active={tab === "preferences"} onClick={() => setTab("preferences")}><SettingsIcon className="mr-1 h-3.5 w-3.5" />Preferences</TabBtn>
         <TabBtn active={tab === "subscription"} onClick={() => setTab("subscription")}><CreditCard className="mr-1 h-3.5 w-3.5" />Subscription</TabBtn>
+        <TabBtn active={tab === "danger"} onClick={() => setTab("danger")}><AlertTriangle className="mr-1 h-3.5 w-3.5 text-destructive" /><span className="text-destructive">Danger Zone</span></TabBtn>
       </div>
 
       {tab === "profile" && (
@@ -215,12 +228,34 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
         </Card>
       )}
 
+      {tab === "danger" && (
+        <div className="space-y-4">
+          <Card className="border-destructive/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive"><AlertTriangle className="h-4 w-4" />Danger Zone</CardTitle>
+              <CardDescription>These actions are irreversible. Please proceed with caution.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                <div>
+                  <div className="font-medium text-sm">Clear All Trades</div>
+                  <div className="text-xs text-muted-foreground">Permanently delete all trades from your account. This cannot be undone.</div>
+                </div>
+                <Button variant="destructive" size="sm" onClick={clearAllTrades} disabled={clearingTrades}>
+                  {clearingTrades ? "Deleting..." : "Clear All Trades"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Account dialog */}
       <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editingAccount.id ? "Edit" : "Add"} Account</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2 space-y-1.5"><Label>Account Name</Label><Input value={editingAccount.name ?? ""} onChange={(e) => setEditingAccount({ ...editingAccount, name: e.target.value })} placeholder="e.g. jsontrades 50K" /></div>
+            <div className="col-span-2 space-y-1.5"><Label>Account Name</Label><Input value={editingAccount.name ?? ""} onChange={(e) => setEditingAccount({ ...editingAccount, name: e.target.value })} placeholder="e.g. Apex 50K" /></div>
             <div className="space-y-1.5">
               <Label>Type</Label>
               <Select value={editingAccount.type ?? "eval"} onValueChange={(v) => setEditingAccount({ ...editingAccount, type: v })}>
@@ -246,7 +281,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5"><Label>Firm</Label><Input value={editingAccount.firm ?? ""} onChange={(e) => setEditingAccount({ ...editingAccount, firm: e.target.value })} placeholder="e.g. jsontrades, Topstep" /></div>
+            <div className="space-y-1.5"><Label>Firm</Label><Input value={editingAccount.firm ?? ""} onChange={(e) => setEditingAccount({ ...editingAccount, firm: e.target.value })} placeholder="e.g. Apex, Topstep" /></div>
             <div className="space-y-1.5"><Label>Size</Label><Input value={editingAccount.size ?? ""} onChange={(e) => setEditingAccount({ ...editingAccount, size: e.target.value })} placeholder="$50,000" /></div>
             <div className="space-y-1.5"><Label>Platform</Label><Input value={editingAccount.platform ?? ""} onChange={(e) => setEditingAccount({ ...editingAccount, platform: e.target.value })} placeholder="Tradovate" /></div>
             <div className="space-y-1.5"><Label>Balance</Label><Input value={editingAccount.balance ?? ""} onChange={(e) => setEditingAccount({ ...editingAccount, balance: e.target.value })} placeholder="$52,400" /></div>
