@@ -1,4 +1,4 @@
-# Apex — Trading Discipline Platform
+# jsontrades — Trading Discipline Platform
 
 Production-ready Next.js 15 + Supabase platform combining a trader-facing journal
 and an admin dashboard. Single project, shared auth, shared database.
@@ -69,7 +69,7 @@ Open `http://localhost:3000`.
 
 ```bash
 git init && git add . && git commit -m "Initial commit"
-gh repo create apex-platform --public --push   # or push to GitHub manually
+gh repo create jsontrades-platform --public --push   # or push to GitHub manually
 ```
 
 Then on [vercel.com/new](https://vercel.com/new):

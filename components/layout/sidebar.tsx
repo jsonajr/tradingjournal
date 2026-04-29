@@ -38,7 +38,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
           <TrendingUp className="h-5 w-5" />
         </div>
         <div>
-          <div className="text-sm font-bold">Apex</div>
+          <div className="text-sm font-bold">jsontrades</div>
           <div className="text-xs text-muted-foreground">Trading Platform</div>
         </div>
       </Link>

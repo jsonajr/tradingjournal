@@ -46,7 +46,7 @@ function LoginForm() {
     <Card className="w-full max-w-md">
       <CardHeader>
         <Link href="/" className="mb-2 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <TrendingUp className="h-4 w-4 text-primary" /> Apex
+          <TrendingUp className="h-4 w-4 text-primary" /> jsontrades
         </Link>
         <CardTitle>Welcome back</CardTitle>
         <CardDescription>Sign in to your account</CardDescription>

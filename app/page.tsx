@@ -19,7 +19,7 @@ export default async function LandingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <TrendingUp className="h-4 w-4" />
             </div>
-            <span className="font-bold">Apex</span>
+            <span className="font-bold">jsontrades</span>
           </Link>
           <nav className="flex items-center gap-2">
             <Link href="/pricing" className="hidden text-sm font-medium text-muted-foreground hover:text-foreground sm:inline-block px-3 py-2">
@@ -106,7 +106,7 @@ export default async function LandingPage() {
 
       <footer className="border-t py-8">
         <div className="container mx-auto flex flex-col items-center justify-between gap-2 px-4 text-sm text-muted-foreground sm:flex-row">
-          <div>© {new Date().getFullYear()} Apex Trading Platform</div>
+          <div>© {new Date().getFullYear()} jsontrades Trading Platform</div>
           <div className="flex gap-4">
             <Link href="/pricing" className="hover:text-foreground">Pricing</Link>
             <Link href="/login" className="hover:text-foreground">Login</Link>

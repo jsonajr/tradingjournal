@@ -18,7 +18,7 @@ export function MobileHeader({ profile }: { profile: Profile }) {
       <Link href={profile.role === "admin" || profile.role === "moderator" ? "/admin" : "/dashboard"} className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground"><TrendingUp className="h-4 w-4" /></div>
         <div>
-          <div className="text-sm font-bold leading-tight">Apex</div>
+          <div className="text-sm font-bold leading-tight">jsontrades</div>
           <div className="text-[10px] uppercase tracking-wide text-primary leading-tight">{profile.role} · {profile.plan}</div>
         </div>
       </Link>
