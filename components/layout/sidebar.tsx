@@ -1,22 +1,27 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, BookOpen, Settings, Shield, LogOut, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Settings, Shield, LogOut, TrendingUp, PlusCircle, Upload, DollarSign, CalendarDays, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/auth";
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/journal",   label: "Journal",   icon: BookOpen },
-  { href: "/settings",  label: "Settings",  icon: Settings },
+  { href: "/dashboard",  label: "Dashboard",               icon: LayoutDashboard },
+  { href: "/trades",     label: "Trades",                  icon: List },
+  { href: "/trades/new", label: "New Trade",               icon: PlusCircle },
+  { href: "/import",     label: "Import CSV",              icon: Upload },
+  { href: "/eval",       label: "Eval Expenses & Payouts", icon: DollarSign },
+  { href: "/journal",    label: "Playbook Journal",        icon: CalendarDays },
+  { href: "/settings",   label: "Settings",                icon: Settings },
 ];
+
 const ADMIN_NAV = [
-  { href: "/admin",          label: "Admin Home", icon: Shield },
-  { href: "/admin/users",    label: "Users",      icon: Shield },
-  { href: "/admin/trades",   label: "All Trades", icon: TrendingUp },
-  { href: "/admin/cooldowns",label: "Cooldowns",  icon: Shield },
+  { href: "/admin",           label: "Admin Home", icon: Shield },
+  { href: "/admin/users",     label: "Users",      icon: Shield },
+  { href: "/admin/trades",    label: "All Trades", icon: TrendingUp },
+  { href: "/admin/cooldowns", label: "Cooldowns",  icon: Shield },
 ];
 
 export function AppSidebar({ profile }: { profile: Profile }) {
@@ -38,14 +43,14 @@ export function AppSidebar({ profile }: { profile: Profile }) {
           <TrendingUp className="h-5 w-5" />
         </div>
         <div>
-          <div className="text-sm font-bold">jsontrades</div>
+          <div className="text-sm font-bold">JsonTrades</div>
           <div className="text-xs text-muted-foreground">Trading Platform</div>
         </div>
       </Link>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {NAV.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const active = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/trades/new" && pathname.startsWith(item.href));
           return (
             <Link key={item.href} href={item.href} className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
@@ -78,9 +83,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
       <div className="border-t p-3">
         <div className="mb-2 px-2">
           <div className="truncate text-sm font-medium">{profile.full_name || profile.email}</div>
-          <div className="text-xs uppercase tracking-wide text-primary">
-            {profile.role} · {profile.plan}
-          </div>
+          <div className="text-xs uppercase tracking-wide text-primary">{profile.role} · {profile.plan}</div>
         </div>
         <Button variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={signOut}>
           <LogOut className="h-4 w-4" /> Sign out

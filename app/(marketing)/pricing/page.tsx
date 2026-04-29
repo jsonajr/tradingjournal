@@ -10,26 +10,17 @@ const TIERS = [
     plan: "free",
     price: "$0",
     period: "forever",
-    features: ["Manual trade logging", "Up to 100 trades/month", "Basic dashboard", "Daily journal", "1 trading account"],
+    features: ["Manual trade logging", "Up to 100 trades/month", "Basic dashboard", "Daily journal", "CSV import", "1 trading account", "Eval expense tracker"],
     cta: "Get Started",
     href: "/signup",
   },
   {
-    name: "Pro",
-    plan: "pro",
-    price: "$19",
-    period: "/month",
-    popular: true,
-    features: ["Everything in Free", "Unlimited trades", "CSV import (Tradovate, ProjectX)", "Advanced analytics", "Cooldown rules", "Up to 10 accounts", "Email support"],
-    cta: "Start Pro",
-    href: "/signup?plan=pro",
-  },
-  {
     name: "Premium",
     plan: "premium",
-    price: "$49",
+    price: "$29",
     period: "/month",
-    features: ["Everything in Pro", "Unlimited accounts", "Team admin dashboard", "Priority support", "Custom cooldown rules", "API access", "Early access to new features"],
+    popular: true,
+    features: ["Everything in Free", "Unlimited trades", "Unlimited accounts", "Advanced analytics", "Cooldown rules", "Admin dashboard access", "Priority support", "Early access to new features"],
     cta: "Start Premium",
     href: "/signup?plan=premium",
   },
@@ -46,7 +37,7 @@ export default async function PricingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <TrendingUp className="h-4 w-4" />
             </div>
-            <span className="font-bold">jsontrades</span>
+            <span className="font-bold">JsonTrades</span>
           </Link>
           <nav className="flex items-center gap-2">
             {profile ? (
@@ -67,10 +58,10 @@ export default async function PricingPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <h1 className="text-4xl font-bold md:text-5xl">Simple, fair pricing</h1>
-            <p className="mt-3 text-muted-foreground">Choose the plan that fits how you trade. Cancel anytime.</p>
+            <p className="mt-3 text-muted-foreground">Start free, upgrade when you&apos;re ready. Cancel anytime.</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="mx-auto grid max-w-2xl grid-cols-1 gap-6 md:grid-cols-2">
             {TIERS.map((t) => (
               <Card key={t.name} className={t.popular ? "border-primary shadow-lg shadow-primary/20" : ""}>
                 <CardHeader>
@@ -96,7 +87,7 @@ export default async function PricingPage() {
                     className="mt-6 w-full"
                     variant={t.popular ? "default" : "outline"}
                     asChild={!profile || t.plan === "free"}
-                    onClick={profile && t.plan !== "free" ? () => alert("Stripe Checkout integration coming soon. Set STRIPE_SECRET_KEY and the price IDs in .env.local to enable.") : undefined}
+                    onClick={profile && t.plan !== "free" ? () => alert("Stripe Checkout coming soon.") : undefined}
                   >
                     {!profile || t.plan === "free"
                       ? <Link href={profile ? "/dashboard" : t.href}>{profile ? "Go to dashboard" : t.cta}</Link>
@@ -106,10 +97,6 @@ export default async function PricingPage() {
               </Card>
             ))}
           </div>
-
-          <p className="mt-12 text-center text-xs text-muted-foreground">
-            Stripe integration is wired up but disabled until you add your API keys to <code className="rounded bg-muted px-1 py-0.5">.env.local</code>. See README.md.
-          </p>
         </div>
       </section>
     </div>
