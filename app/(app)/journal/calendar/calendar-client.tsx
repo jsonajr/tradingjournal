@@ -156,15 +156,22 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                 const e = dateStr ? entryByDate[dateStr] : null;
                 const pnl = dateStr ? pnlByDate[dateStr] : null;
                 const isToday = dateStr === today;
-                const moodColor = e?.mood === "great" ? "bg-green-500/15 text-green-600" : e?.mood === "good" ? "bg-blue-500/15 text-blue-500" : e?.mood === "bad" || e?.mood === "terrible" ? "bg-red-500/15 text-red-500" : "bg-amber-500/15 text-amber-600";
+                const moodColor = e?.mood === "great" ? "bg-green-500/20 text-green-600" : e?.mood === "good" ? "bg-blue-500/15 text-blue-500" : e?.mood === "bad" || e?.mood === "terrible" ? "bg-red-500/15 text-red-500" : "bg-amber-500/15 text-amber-600";
+                const dayBg = pnl == null ? "" : pnl > 0 ? "bg-green-500/10" : pnl < 0 ? "bg-red-500/10" : "bg-zinc-500/10";
+                const fmtPnl = pnl != null ? `${pnl >= 0 ? "+" : "-"}$${Math.abs(pnl).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : null;
                 return (
                   <button key={i} onClick={() => c.cur && openEntry(dateStr)} disabled={!c.cur}
-                    className={cn("flex min-h-[55px] flex-col rounded-md border p-1 text-left transition-colors md:min-h-[70px]",
-                      c.cur ? "hover:border-primary hover:bg-primary/5 cursor-pointer" : "opacity-30 cursor-default",
-                      isToday && "border-primary bg-primary/5", e && "border-primary/40")}>
-                    <div className={cn("text-[10px] font-semibold mb-0.5", isToday && "text-primary")}>{c.day}</div>
+                    className={cn("flex min-h-[80px] flex-col rounded-md border p-1.5 text-left transition-colors md:min-h-[100px]",
+                      c.cur ? "hover:border-primary cursor-pointer" : "opacity-20 cursor-default",
+                      isToday && "border-primary ring-1 ring-primary",
+                      pnl != null && pnl > 0 && "border-green-500/30",
+                      pnl != null && pnl < 0 && "border-red-500/30",
+                      dayBg)}>
+                    <div className={cn("text-[11px] font-semibold mb-0.5", isToday && "text-primary")}>{c.day}</div>
                     {e && <div className={cn("rounded px-1 py-0.5 text-[8px] font-semibold mb-0.5 truncate", moodColor)}>{e.bias ? `${e.bias.slice(0,1)} · ` : ""}{e.title?.slice(0, 12) || "Entry"}</div>}
-                    {pnl != null && dateStr && <div className={cn("mt-auto text-[9px] font-bold", pnl >= 0 ? "text-green-500" : "text-red-500")}>{pnl >= 0 ? "+" : ""}${Math.abs(pnl).toFixed(0)}</div>}
+                    {fmtPnl && dateStr && (
+                      <div className={cn("mt-auto text-sm font-black leading-tight", pnl! >= 0 ? "text-green-500" : "text-red-500")}>{fmtPnl}</div>
+                    )}
                   </button>
                 );
               })}

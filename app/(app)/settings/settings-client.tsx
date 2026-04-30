@@ -119,9 +119,9 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
         <TabBtn active={tab === "accounts"} onClick={() => setTab("accounts")}><Wallet className="mr-1 h-3.5 w-3.5" />Accounts</TabBtn>
         <TabBtn active={tab === "preferences"} onClick={() => setTab("preferences")}><SettingsIcon className="mr-1 h-3.5 w-3.5" />Preferences</TabBtn>
         <TabBtn active={tab === "subscription"} onClick={() => setTab("subscription")}><CreditCard className="mr-1 h-3.5 w-3.5" />Subscription</TabBtn>
-        <TabBtn active={tab === "danger"} onClick={() => setTab("danger")}><AlertTriangle className="mr-1 h-3.5 w-3.5 text-destructive" /><span className="text-destructive">Danger Zone</span></TabBtn>
         <TabBtn active={tab === "theme"} onClick={() => setTab("theme")}><Palette className="mr-1 h-3.5 w-3.5" />Theme</TabBtn>
         <TabBtn active={tab === "sessions"} onClick={() => setTab("sessions")}><Shield className="mr-1 h-3.5 w-3.5" />Sessions</TabBtn>
+        <TabBtn active={tab === "danger"} onClick={() => setTab("danger")}><AlertTriangle className="mr-1 h-3.5 w-3.5 text-destructive" /><span className="text-destructive">Danger Zone</span></TabBtn>
       </div>
 
       {tab === "profile" && (

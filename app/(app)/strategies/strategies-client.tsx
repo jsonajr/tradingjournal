@@ -19,7 +19,6 @@ type Strategy = {
   sessions: string[];
   confluences: string;
   timeframes: string[];
-  direction: "Long" | "Short" | "Both";
   tags: string[];
   notes: string;
   color: string;
@@ -41,7 +40,7 @@ function genId() { return Date.now().toString(36) + Math.random().toString(36).s
 
 const EMPTY: Strategy = {
   id: "", name: "", description: "", conditions: "", sessions: [],
-  confluences: "", timeframes: [], direction: "Both", tags: [], notes: "", color: COLORS[0],
+  confluences: "", timeframes: [], tags: [], notes: "", color: COLORS[0],
 };
 
 export function StrategiesClient() {
@@ -128,7 +127,6 @@ export function StrategiesClient() {
               </CardHeader>
               <CardContent className="pl-5 space-y-2 text-sm">
                 <div className="flex flex-wrap gap-1">
-                  <Badge variant="outline" className="text-xs">{s.direction}</Badge>
                   {s.sessions.map((sess) => <Badge key={sess} variant="secondary" className="text-xs">{sess}</Badge>)}
                   {s.timeframes.map((tf) => <Badge key={tf} className="text-xs bg-primary/15 text-primary">{tf}</Badge>)}
                 </div>
@@ -162,19 +160,6 @@ export function StrategiesClient() {
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2 space-y-1.5"><Label className="text-xs">Strategy Name *</Label><Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="e.g. VWAP Reclaim Long" /></div>
               <div className="col-span-2 space-y-1.5"><Label className="text-xs">Description</Label><Input value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} placeholder="Brief overview..." /></div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wide">Direction</Label>
-              <div className="flex gap-2">
-                {(["Long","Short","Both"] as const).map((d) => (
-                  <button key={d} onClick={() => setEditing({ ...editing, direction: d })}
-                    className={cn("rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
-                      editing.direction === d ? d === "Long" ? "border-green-500 bg-green-500/15 text-green-500" : d === "Short" ? "border-red-500 bg-red-500/15 text-red-500" : "border-primary bg-primary/15 text-primary" : "border-input text-muted-foreground hover:border-primary")}>
-                    {d}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div className="space-y-1.5">
