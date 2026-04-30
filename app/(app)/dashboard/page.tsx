@@ -73,7 +73,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats grid — 3 cols on all sizes, auto font scaling */}
-      <div className="mb-4 grid grid-cols-3 gap-2 md:gap-3">
+      <div className="mb-4 grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
         {/* Net P&L */}
         <Card><CardContent className="p-2.5 md:p-4">
           <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Net P&L</div>
