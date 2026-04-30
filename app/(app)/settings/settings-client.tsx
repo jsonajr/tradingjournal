@@ -26,6 +26,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
   const supabase = createClient();
   const [tab, setTab] = useState<"profile" | "accounts" | "preferences" | "subscription" | "danger" | "theme" | "sessions">("profile");
   const [clearingTrades, setClearingTrades] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [accounts, setAccounts] = useState(initialAccounts);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Partial<Account>>({});
@@ -105,6 +106,27 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
     if (error) { toast.error(error.message); return; }
     toast.success("All trades deleted");
     router.refresh();
+  }
+
+  async function deleteUserAccount() {
+    if (!confirm(
+      "⚠️ Delete your account?\n\nThis will permanently delete:\n• All your trades and journal entries\n• All trading accounts\n• Your profile and preferences\n• Your login credentials\n\nThis action CANNOT be undone."
+    )) return;
+    if (!confirm(
+      "🚨 Final warning\n\nYou are about to permanently erase everything tied to your account. There is no recovery option.\n\nAre you absolutely sure you want to continue?"
+    )) return;
+    const typed = prompt("Type DELETE to confirm:");
+    if (typed !== "DELETE") { toast.error("Cancelled — you must type DELETE to confirm."); return; }
+    setDeletingAccount(true);
+    const res = await fetch("/api/delete-account", { method: "DELETE" });
+    setDeletingAccount(false);
+    if (!res.ok) {
+      const { error } = await res.json();
+      toast.error(error ?? "Failed to delete account");
+      return;
+    }
+    await supabase.auth.signOut();
+    router.push("/");
   }
 
   return (
@@ -248,6 +270,24 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
                 <Button variant="destructive" size="sm" onClick={clearAllTrades} disabled={clearingTrades}>
                   {clearingTrades ? "Deleting..." : "Clear All Trades"}
                 </Button>
+              </div>
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="font-medium text-sm">Delete Account</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">Permanently and irreversibly deletes your account. Cannot be undone.</div>
+                  </div>
+                  <Button variant="destructive" size="sm" onClick={deleteUserAccount} disabled={deletingAccount} className="shrink-0">
+                    {deletingAccount ? "Deleting..." : "Delete Account"}
+                  </Button>
+                </div>
+                <div className="text-xs text-muted-foreground space-y-0.5 border-t border-destructive/20 pt-3">
+                  <div className="font-medium text-destructive mb-1">The following will be permanently deleted:</div>
+                  <div>• All trades and journal entries</div>
+                  <div>• All trading accounts and their history</div>
+                  <div>• Your profile, preferences, and settings</div>
+                  <div>• Your login credentials and session data</div>
+                </div>
               </div>
             </CardContent>
           </Card>
