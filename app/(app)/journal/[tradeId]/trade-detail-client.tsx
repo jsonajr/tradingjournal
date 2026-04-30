@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Trash2, TrendingUp, TrendingDown, BarChart2, Save, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { fmtMoney } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 const SETUPS  = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other"];
@@ -24,7 +25,7 @@ type Trade = {
   entry_price: number | null; exit_price: number | null; stop_price: number | null;
   pnl: number; commission: number; r_multiple: number | null;
   setup: string | null; session: string | null; grade: string | null;
-  notes: string | null; account_id: string | null;
+  notes: string | null; account_id: string | null; screenshot_url?: string | null;
   accounts: { name: string; firm: string | null } | { name: string; firm: string | null }[] | null;
 };
 
@@ -36,28 +37,6 @@ function getAccount(accounts: Trade["accounts"]) {
   return Array.isArray(accounts) ? accounts[0] ?? null : accounts;
 }
 
-const TV_SYMBOL_MAP: Record<string, string> = {
-  ES:  "AMEX:SPY",
-  MES: "AMEX:SPY",
-  NQ:  "NASDAQ:QQQ",
-  MNQ: "NASDAQ:QQQ",
-  YM:  "AMEX:DIA",
-  RTY: "AMEX:IWM",
-  CL:  "TVC:USOIL",
-  GC:  "TVC:GOLD",
-};
-
-const INTERVALS = [
-  { label: "1m",  value: "1" },
-  { label: "3m",  value: "3" },
-  { label: "5m",  value: "5" },
-  { label: "15m", value: "15" },
-  { label: "30m", value: "30" },
-  { label: "1h",  value: "60" },
-  { label: "4h",  value: "240" },
-  { label: "D",   value: "D" },
-];
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
@@ -67,63 +46,73 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function TradingViewWidget({ symbol, interval, entry, exit, stop, direction }: {
-  symbol: string; interval: string;
-  entry: number | null; exit: number | null; stop: number | null;
-  direction: "Long" | "Short";
-}) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const baseSymbol = symbol.replace(/[A-Z]\d+$/, "");
-  const tvSymbol = TV_SYMBOL_MAP[baseSymbol] ?? TV_SYMBOL_MAP[symbol] ?? `CME_MINI:${baseSymbol}1!`;
+function TradeScreenshot({ tradeId, existingUrl }: { tradeId: string; existingUrl: string | null }) {
+  const [url, setUrl] = useState(existingUrl);
+  const [uploading, setUploading] = useState(false);
+  const supabase = createClient();
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const containerId = `tv_chart_${symbol}_${interval}`;
-    containerRef.current.innerHTML = `<div id="${containerId}" style="height:100%;width:100%"></div>`;
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/tv.js";
-    script.async = true;
-    script.onload = () => {
-      if (typeof window.TradingView === "undefined") return;
-      new window.TradingView.widget({
-        autosize: true, symbol: tvSymbol, interval,
-        timezone: "America/New_York",
-        theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
-        style: "1", locale: "en", enable_publishing: false,
-        allow_symbol_change: true, hide_side_toolbar: false,
-        container_id: containerId,
-        studies: ["Volume@tv-basicstudies"],
-        overrides: { "scalesProperties.showLeftScale": false },
-      });
-    };
-    const existing = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
-    if (existing) script.onload?.(new Event("load"));
-    else document.head.appendChild(script);
-    return () => { if (containerRef.current) containerRef.current.innerHTML = ""; };
-  }, [tvSymbol, interval]);
+  async function handleFile(file: File) {
+    if (!file.type.startsWith("image/")) { toast.error("Please upload an image file"); return; }
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `trade-screenshots/${tradeId}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("trade-screenshots").upload(path, file, { upsert: true });
+    if (upErr) { toast.error("Upload failed: " + upErr.message); setUploading(false); return; }
+    const { data } = supabase.storage.from("trade-screenshots").getPublicUrl(path);
+    const publicUrl = data.publicUrl + "?t=" + Date.now();
+    await supabase.from("trades").update({ screenshot_url: publicUrl }).eq("id", tradeId);
+    setUrl(publicUrl);
+    setUploading(false);
+    toast.success("Screenshot saved");
+  }
+
+  async function removeScreenshot() {
+    if (!confirm("Remove this screenshot?")) return;
+    await supabase.from("trades").update({ screenshot_url: null }).eq("id", tradeId);
+    setUrl(null);
+    toast.success("Screenshot removed");
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  }
 
   return (
     <div className="relative">
-      <div ref={containerRef} className="h-[480px] w-full rounded-b-lg overflow-hidden" />
-      {(entry || exit || stop) && (
-        <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
-          {entry && (
-            <div className="flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 text-xs backdrop-blur">
-              <div className="h-2 w-2 rounded-full bg-green-500" />
-              <span className="text-green-400 font-semibold">Entry {entry}</span>
-            </div>
-          )}
-          {exit && (
-            <div className="flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 text-xs backdrop-blur">
-              <div className={`h-2 w-2 rounded-full ${direction === "Long" && exit > (entry ?? 0) ? "bg-green-500" : "bg-red-500"}`} />
-              <span className={`font-semibold ${direction === "Long" && exit > (entry ?? 0) ? "text-green-400" : "text-red-400"}`}>Exit {exit}</span>
-            </div>
-          )}
-          {stop && (
-            <div className="flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 text-xs backdrop-blur">
-              <div className="h-2 w-2 rounded-full bg-red-500" />
-              <span className="text-red-400 font-semibold">Stop {stop}</span>
-            </div>
+      {url ? (
+        <div className="relative group rounded-b-lg overflow-hidden">
+          <img src={url} alt="Trade screenshot" className="w-full object-contain max-h-[480px] bg-black/50" />
+          <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 bg-black/60 transition-opacity">
+            <label className="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+              Replace
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+            </label>
+            <button onClick={removeScreenshot} className="rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground hover:bg-destructive/90">
+              Remove
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          onDrop={onDrop}
+          onDragOver={(e) => e.preventDefault()}
+          className="flex flex-col items-center justify-center gap-3 rounded-b-lg border-2 border-dashed border-border bg-muted/30 min-h-[240px] p-8 text-center transition-colors hover:border-primary/50"
+        >
+          {uploading ? (
+            <div className="text-sm text-muted-foreground animate-pulse">Uploading...</div>
+          ) : (
+            <>
+              <div className="text-3xl">📸</div>
+              <div className="text-sm font-medium">Drop a screenshot here</div>
+              <div className="text-xs text-muted-foreground">or</div>
+              <label className="cursor-pointer rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
+                Choose File
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+              </label>
+              <div className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP supported</div>
+            </>
           )}
         </div>
       )}
@@ -268,7 +257,6 @@ export function TradeDetailClient({ trade: initialTrade, adjacent, accounts }: {
 }) {
   const router = useRouter();
   const [trade, setTrade] = useState(initialTrade);
-  const [interval, setInterval] = useState("5");
   const [notes, setNotes] = useState(trade.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -400,24 +388,12 @@ export function TradeDetailClient({ trade: initialTrade, adjacent, accounts }: {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <BarChart2 className="h-4 w-4" />{trade.symbol} · TradingView
+                <BarChart2 className="h-4 w-4" />Trade Screenshot
               </CardTitle>
-              <div className="flex gap-1 flex-wrap">
-                {INTERVALS.map((iv) => (
-                  <button key={iv.value} onClick={() => setInterval(iv.value)}
-                    className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${interval === iv.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}>
-                    {iv.label}
-                  </button>
-                ))}
-              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0 overflow-hidden rounded-b-lg">
-            <TradingViewWidget
-              symbol={trade.symbol} interval={interval}
-              entry={trade.entry_price} exit={trade.exit_price}
-              stop={trade.stop_price} direction={trade.direction}
-            />
+            <TradeScreenshot tradeId={trade.id} existingUrl={trade.screenshot_url ?? null} />
           </CardContent>
         </Card>
 
@@ -481,10 +457,4 @@ export function TradeDetailClient({ trade: initialTrade, adjacent, accounts }: {
       )}
     </div>
   );
-}
-
-declare global {
-  interface Window {
-    TradingView: { widget: new (config: Record<string, unknown>) => void };
-  }
 }

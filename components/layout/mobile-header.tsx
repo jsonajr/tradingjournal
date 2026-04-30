@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TrendingUp, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/auth";
 
@@ -25,10 +24,7 @@ export function MobileHeader({ profile }: { profile: Profile }) {
           <div className="text-[10px] uppercase tracking-wide text-primary leading-tight">{profile.role} · {profile.plan}</div>
         </div>
       </Link>
-      <div className="flex items-center gap-1">
-        <ThemeToggle />
-        <Button size="icon" variant="ghost" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
-      </div>
+      <Button size="icon" variant="ghost" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
     </header>
   );
 }

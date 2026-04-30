@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Theme = "dark" | "light" | "midnight";
 
@@ -12,7 +13,7 @@ function applyTheme(theme: Theme) {
   if (theme === "midnight") { el.classList.add("dark"); el.classList.add("midnight"); }
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ compact }: { compact?: boolean }) {
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
@@ -26,6 +27,15 @@ export function ThemeToggle() {
     setTheme(next);
     applyTheme(next);
     localStorage.setItem("tj_theme", next);
+  }
+
+  if (compact) {
+    return (
+      <button onClick={cycle} className="flex flex-col items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors" title={`Theme: ${theme}`}>
+        {theme === "light" ? <Sun className="h-5 w-5" /> : theme === "midnight" ? <span className="text-base leading-5">🌑</span> : <Moon className="h-5 w-5" />}
+        <span className="text-[9px] w-full text-center">{theme === "light" ? "Light" : theme === "midnight" ? "Mid" : "Dark"}</span>
+      </button>
+    );
   }
 
   return (

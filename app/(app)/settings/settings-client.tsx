@@ -331,9 +331,7 @@ const ACCENT_COLORS = [
   { name: "Orange", value: "#f97316" },
 ];
 
-function ThemePanel({ profile }: { profile: Profile }) {
-  const isAdmin = profile.role === "admin";
-
+function ThemePanel({ profile: _profile }: { profile: Profile }) {
   function setAccent(hex: string) {
     const r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
     const max = Math.max(r,g,b), min = Math.min(r,g,b);
@@ -348,34 +346,24 @@ function ThemePanel({ profile }: { profile: Profile }) {
     try { localStorage.setItem("tj_accent", hex); } catch {}
   }
 
-  function setFontSize(size: string) {
-    document.documentElement.style.fontSize = size;
-    try { localStorage.setItem("tj_fontsize", size); } catch {}
+  function setFontSize(type: "desktop" | "mobile", size: string) {
+    const key = type === "desktop" ? "tj_fontsize_desktop" : "tj_fontsize_mobile";
+    try { localStorage.setItem(key, size); } catch {}
+    const isMobile = window.innerWidth < 768;
+    if ((type === "mobile" && isMobile) || (type === "desktop" && !isMobile)) {
+      document.documentElement.style.fontSize = size;
+    }
   }
+
+  const SIZE_OPTS = [
+    { label: "Small", size: "13px" },
+    { label: "Default", size: "16px" },
+    { label: "Large", size: "18px" },
+    { label: "XL", size: "20px" },
+  ];
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Palette className="h-4 w-4" />Dark / Light Mode</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground mb-3">Toggle between dark and light mode. Your preference is saved.</p>
-          <div className="flex gap-2">
-            {[
-              { label: "🌙 Dark", val: "dark" },
-              { label: "☀️ Light", val: "light" },
-            ].map((o) => (
-              <button key={o.val} onClick={() => {
-                document.documentElement.classList.toggle("dark", o.val === "dark");
-                try { localStorage.setItem("tj_theme", o.val); } catch {}
-              }}
-                className="rounded-md border px-5 py-2.5 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       <Card>
         <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Palette className="h-4 w-4" />Accent Color</CardTitle></CardHeader>
         <CardContent>
@@ -391,22 +379,35 @@ function ThemePanel({ profile }: { profile: Profile }) {
         </CardContent>
       </Card>
 
-      {isAdmin && (
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Text Size (Admin Only)</CardTitle></CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground mb-3">Adjust base font size across the app.</p>
-            <div className="flex gap-2">
-              {[{ label: "Small (14px)", size: "14px" }, { label: "Default (16px)", size: "16px" }, { label: "Large (18px)", size: "18px" }].map((o) => (
-                <button key={o.size} onClick={() => setFontSize(o.size)}
-                  className="rounded-md border px-4 py-2 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
-                  {o.label}
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Palette className="h-4 w-4" />Desktop Text Size</CardTitle></CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground mb-3">Adjust base font size for desktop. Applied immediately.</p>
+          <div className="flex gap-2 flex-wrap">
+            {SIZE_OPTS.map((o) => (
+              <button key={o.size} onClick={() => setFontSize("desktop", o.size)}
+                className="rounded-md border px-4 py-2 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Palette className="h-4 w-4" />Mobile Text Size</CardTitle></CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground mb-3">Adjust base font size for mobile. Applied immediately.</p>
+          <div className="flex gap-2 flex-wrap">
+            {SIZE_OPTS.map((o) => (
+              <button key={o.size} onClick={() => setFontSize("mobile", o.size)}
+                className="rounded-md border px-4 py-2 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

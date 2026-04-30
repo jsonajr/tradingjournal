@@ -33,7 +33,6 @@ export default async function DashboardPage() {
   const avgWin = wins.length ? grossP / wins.length : 0;
   const avgLoss = losses.length ? grossL / losses.length : 0;
 
-  // Best day
   const dayPnl: Record<string, number> = {};
   t.forEach((tr) => { dayPnl[tr.trade_date] = (dayPnl[tr.trade_date] ?? 0) + (tr.pnl - tr.commission); });
   const dayEntries = Object.entries(dayPnl);
@@ -53,84 +52,98 @@ export default async function DashboardPage() {
   let cum = 0;
   const series = sorted.map(tr => { cum += (tr.pnl - tr.commission); return { x: tr.trade_date, y: cum }; });
 
+  // Format helpers for compact mobile display
+  function fmtCompact(n: number): string {
+    const abs = Math.abs(n);
+    if (abs >= 100000) return `${n >= 0 ? "+" : "-"}$${(abs / 1000).toFixed(0)}k`;
+    if (abs >= 10000) return `${n >= 0 ? "+" : "-"}$${(abs / 1000).toFixed(1)}k`;
+    return `${n >= 0 ? "+" : ""}${fmtMoney(Math.abs(n))}`;
+  }
+
   return (
-    <div className="p-4 md:p-8">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+    <div className="p-3 md:p-8">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold md:text-3xl">Welcome back{profile.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}</h1>
-          <p className="text-sm text-muted-foreground">Your trading overview</p>
+          <h1 className="text-xl font-bold md:text-3xl">Welcome back{profile.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}</h1>
+          <p className="text-xs text-muted-foreground md:text-sm">Your trading overview</p>
         </div>
         <QuickTradeWrapper accounts={accounts ?? []} userId={user.id} />
       </div>
 
-      {/* 3 top + 3 bottom stats grid */}
-      <div className="mb-6 grid grid-cols-3 gap-3">
-        <Card><CardContent className="p-4">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Net P&L</div>
-          <div className={`text-xl font-black md:text-2xl truncate ${totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
-            {totalPnl >= 0 ? "+" : ""}{fmtMoney(Math.abs(totalPnl))}
+      {/* Stats grid — 3 cols on all sizes, auto font scaling */}
+      <div className="mb-4 grid grid-cols-3 gap-2 md:gap-3">
+        {/* Net P&L */}
+        <Card><CardContent className="p-2.5 md:p-4">
+          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Net P&L</div>
+          <div className={`text-sm sm:text-base md:text-2xl font-black leading-tight ${totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
+            {fmtCompact(totalPnl)}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">{t.length} trades</div>
+          <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">{t.length} trades</div>
         </CardContent></Card>
 
-        <Card><CardContent className="p-4">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Win Rate</div>
-          <div className="text-xl font-black md:text-2xl truncate text-blue-400">{winRate.toFixed(1)}%</div>
-          <div className="text-xs text-muted-foreground mt-1">{wins.length}W / {losses.length}L</div>
+        {/* Win Rate */}
+        <Card><CardContent className="p-2.5 md:p-4">
+          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Win Rate</div>
+          <div className="text-sm sm:text-base md:text-2xl font-black leading-tight text-blue-400">{winRate.toFixed(1)}%</div>
+          <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">{wins.length}W / {losses.length}L</div>
         </CardContent></Card>
 
-        <Card><CardContent className="p-4">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Profit Factor</div>
-          <div className={`text-xl font-black md:text-2xl truncate ${pf >= 1.5 ? "text-green-400" : pf >= 1 ? "text-amber-400" : "text-red-400"}`}>
+        {/* Profit Factor */}
+        <Card><CardContent className="p-2.5 md:p-4">
+          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Profit Factor</div>
+          <div className={`text-sm sm:text-base md:text-2xl font-black leading-tight ${pf >= 1.5 ? "text-green-400" : pf >= 1 ? "text-amber-400" : "text-red-400"}`}>
             {pf === 999 ? "∞" : pf.toFixed(2)}
           </div>
         </CardContent></Card>
 
-        <Card><CardContent className="p-4">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Avg Win / Loss</div>
-          <div className="text-base font-black md:text-lg">
-            <span className="text-green-400">{avgWin > 0 ? fmtMoney(avgWin) : "—"}</span>
-            <span className="text-muted-foreground mx-1">/</span>
-            <span className="text-red-400">{avgLoss > 0 ? fmtMoney(avgLoss) : "—"}</span>
+        {/* Avg Win / Loss */}
+        <Card><CardContent className="p-2.5 md:p-4">
+          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Avg W / L</div>
+          <div className="flex items-baseline gap-0.5 flex-wrap">
+            <span className="text-xs sm:text-sm md:text-lg font-black text-green-400 leading-tight">{avgWin > 0 ? fmtCompact(avgWin) : "—"}</span>
+            <span className="text-muted-foreground text-[9px]">/</span>
+            <span className="text-xs sm:text-sm md:text-lg font-black text-red-400 leading-tight">{avgLoss > 0 ? fmtCompact(avgLoss) : "—"}</span>
           </div>
-          <div className="text-xs text-muted-foreground mt-1">per trade</div>
+          <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">per trade</div>
         </CardContent></Card>
 
-        <Card><CardContent className="p-4">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Best Day % of Profit</div>
-          <div className={`text-xl font-black md:text-2xl truncate ${bestDay && bestDay[1] >= 0 ? "text-green-400" : "text-red-400"}`}>
+        {/* Best Day % */}
+        <Card><CardContent className="p-2.5 md:p-4">
+          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best Day %</div>
+          <div className={`text-sm sm:text-base md:text-2xl font-black leading-tight ${bestDay && bestDay[1] >= 0 ? "text-green-400" : "text-red-400"}`}>
             {bestDayPct != null ? `${bestDayPct.toFixed(1)}%` : "—"}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">{bestDay ? `${bestDay[0]} · ${fmtMoney(bestDay[1], true)}` : "No data"}</div>
+          <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5 truncate">{bestDay ? `${bestDay[0]} · ${fmtCompact(bestDay[1])}` : "No data"}</div>
         </CardContent></Card>
 
-        <Card><CardContent className="p-4">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Most Profitable Day</div>
-          <div className="text-xl font-black md:text-2xl truncate text-primary">
+        {/* Most Profitable Day */}
+        <Card><CardContent className="p-2.5 md:p-4">
+          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best DOW</div>
+          <div className="text-sm sm:text-base md:text-2xl font-black leading-tight text-primary">
             {mostProfitableDay ? mostProfitableDay[0].slice(0, 3) : "—"}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {mostProfitableDay && (mostProfitableDay[1] as number) > 0 ? fmtMoney(mostProfitableDay[1] as number, true) + " avg" : "No data"}
+          <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5 truncate">
+            {mostProfitableDay && (mostProfitableDay[1] as number) > 0 ? fmtCompact(mostProfitableDay[1] as number) + " avg" : "No data"}
           </div>
         </CardContent></Card>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle className="text-sm">Equity Curve</CardTitle></CardHeader>
-          <CardContent>
+          <CardHeader className="pb-2 px-3 pt-3 md:p-6"><CardTitle className="text-sm">Equity Curve</CardTitle></CardHeader>
+          <CardContent className="px-3 pb-3 md:p-6">
             {series.length > 0
-              ? <div className="h-[260px]"><EquityChart series={series} /></div>
-              : <div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">Log your first trade to see your equity curve</div>
+              ? <div className="h-[220px] md:h-[260px]"><EquityChart series={series} /></div>
+              : <div className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">Log your first trade to see your equity curve</div>
             }
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 pt-3 md:p-6">
             <CardTitle className="text-sm">Recent Journal</CardTitle>
             <Button size="sm" variant="ghost" asChild><Link href="/journal/calendar"><BookOpen className="mr-1 h-3.5 w-3.5" />Open</Link></Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 pb-3 md:p-6">
             {(recentJournal ?? []).length === 0
               ? <div className="py-8 text-center text-sm text-muted-foreground">No journal entries yet</div>
               : <div className="space-y-3">{(recentJournal ?? []).map((j) => (
@@ -149,7 +162,7 @@ export default async function DashboardPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 pt-3 md:p-6">
           <CardTitle className="text-sm">Recent Trades</CardTitle>
           <Button size="sm" variant="ghost" asChild><Link href="/trades"><TrendingUp className="mr-1 h-3.5 w-3.5" />All Trades</Link></Button>
         </CardHeader>

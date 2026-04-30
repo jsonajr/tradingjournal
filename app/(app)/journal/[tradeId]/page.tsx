@@ -12,7 +12,7 @@ export default async function TradeDetailPage({ params }: { params: Promise<{ tr
 
   const [{ data: trade }, { data: allTrades }, { data: accounts }] = await Promise.all([
     sb.from("trades")
-      .select("id, trade_date, symbol, direction, contracts, entry_price, exit_price, stop_price, pnl, commission, r_multiple, setup, session, grade, notes, account_id, accounts(name, firm)")
+      .select("id, trade_date, symbol, direction, contracts, entry_price, exit_price, stop_price, pnl, commission, r_multiple, setup, session, grade, notes, account_id, screenshot_url, accounts(name, firm)")
       .eq("id", tradeId)
       .eq("user_id", user.id)
       .maybeSingle(),

@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, List, PlusCircle, CalendarDays, Settings, Shield, DollarSign, BookOpen, BarChart2 } from "lucide-react";
+import { LayoutDashboard, List, PlusCircle, CalendarDays, Settings, Shield, BookOpen, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { Profile } from "@/lib/auth";
 
 export function MobileTabBar({ profile }: { profile: Profile }) {
@@ -21,6 +22,10 @@ export function MobileTabBar({ profile }: { profile: Profile }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 backdrop-blur md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
       <div className="flex justify-around overflow-x-auto">
+        {/* Theme toggle as first item */}
+        <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2.5">
+          <ThemeToggle compact />
+        </div>
         {TABS.map((t) => {
           const Icon = t.icon;
           const active = pathname === t.href || (t.href !== "/dashboard" && t.href !== "/trades/new" && pathname.startsWith(t.href));

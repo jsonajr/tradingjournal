@@ -20,6 +20,7 @@ export async function middleware(request: NextRequest) {
   );
 
   await supabase.auth.getUser();
+  response.headers.set("x-pathname", request.nextUrl.pathname);
   return response;
 }
 

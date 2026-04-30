@@ -22,9 +22,10 @@ const NAV = [
 ];
 
 const ADMIN_NAV = [
-  { href: "/admin",        label: "Admin Home", icon: Shield },
-  { href: "/admin/users",  label: "Users",      icon: Shield },
-  { href: "/admin/trades", label: "All Trades", icon: TrendingUp },
+  { href: "/admin",         label: "Admin Home", icon: Shield },
+  { href: "/admin/users",   label: "Users",      icon: Shield },
+  { href: "/admin/trades",  label: "All Trades", icon: TrendingUp },
+  { href: "/admin/invites", label: "Invites",    icon: Shield },
 ];
 
 export function AppSidebar({ profile }: { profile: Profile }) {
