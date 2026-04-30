@@ -46,7 +46,7 @@ export default async function DashboardPage() {
           acc[dow] = (acc[dow] ?? 0) + (tr.pnl - tr.commission);
           return acc;
         }, {} as Record<string, number>)
-      ).reduce((a, b) => b[1] > a[1] ? b : a, ["—", 0])
+      ).reduce((a, b) => (b[1] as number) > (a[1] as number) ? b : a, ["—", 0] as [string, number])
     : null;
 
   const sorted = [...t].sort((a, b) => new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime());
