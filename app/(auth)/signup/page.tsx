@@ -124,7 +124,7 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center p-4" style={{ background: "radial-gradient(ellipse at top, #1a1a1a 0%, #0a0a0a 50%, #000000 100%)" }}>
       <Suspense fallback={<div className="w-full max-w-md animate-pulse rounded-lg bg-muted h-96" />}>
         <SignupForm />
       </Suspense>

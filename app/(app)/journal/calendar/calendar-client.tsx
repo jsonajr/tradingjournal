@@ -35,7 +35,6 @@ function calcStreak(entries: Entry[]): number {
   const dates = new Set(entries.map((e) => e.entry_date));
   let streak = 0;
   const d = new Date();
-  // Check if today or yesterday has an entry (don't break streak for today not yet done)
   const todayStr = d.toISOString().split("T")[0];
   d.setDate(d.getDate() - (dates.has(todayStr) ? 0 : 1));
   while (true) {
@@ -45,6 +44,11 @@ function calcStreak(entries: Entry[]): number {
     d.setDate(d.getDate() - 1);
   }
   return streak;
+}
+
+function fmtPnlCents(pnl: number): string {
+  const sign = pnl >= 0 ? "+" : "-";
+  return sign + "$" + Math.abs(pnl).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export function CalendarClient({ initialEntries, trades }: { initialEntries: Entry[]; trades: TradeMini[] }) {
@@ -127,73 +131,112 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="mb-6 grid grid-cols-3 gap-3">
-        <Card><CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15"><Flame className="h-5 w-5 text-amber-500" /></div>
-          <div><div className="text-xs text-muted-foreground">Current Streak</div><div className="text-2xl font-black text-amber-500">{streak} <span className="text-sm font-normal">days</span></div></div>
-        </CardContent></Card>
-        <Card><CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15"><BookOpen className="h-5 w-5 text-primary" /></div>
-          <div><div className="text-xs text-muted-foreground">Total Journaled</div><div className="text-2xl font-black text-primary">{daysJournaled} <span className="text-sm font-normal">days</span></div></div>
-        </CardContent></Card>
-        <Card><CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/15"><CalendarDays className="h-5 w-5 text-blue-500" /></div>
-          <div><div className="text-xs text-muted-foreground">This Month</div><div className="text-2xl font-black text-blue-500">{thisMonthEntries} <span className="text-sm font-normal">entries</span></div></div>
-        </CardContent></Card>
-      </div>
-
       {view === "cal" && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">{MONTHS[month]} {year}</CardTitle>
-              <div className="flex gap-1">
-                <Button size="icon" variant="ghost" onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); }}><ChevronLeft className="h-4 w-4" /></Button>
-                <Button size="sm" variant="ghost" onClick={() => { setYear(new Date().getFullYear()); setMonth(new Date().getMonth()); }}>Today</Button>
-                <Button size="icon" variant="ghost" onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); }}><ChevronRight className="h-4 w-4" /></Button>
+        <div className="flex gap-4 items-start">
+
+          {/* Left sidebar stats — stacked vertically */}
+          <div className="hidden md:flex flex-col gap-3 w-44 shrink-0">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Flame className="h-5 w-5 text-amber-500 mx-auto mb-2" />
+                <div className="text-3xl font-black text-amber-500">{streak}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">day streak</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <BookOpen className="h-5 w-5 text-primary mx-auto mb-2" />
+                <div className="text-3xl font-black text-primary">{daysJournaled}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">total journaled</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <CalendarDays className="h-5 w-5 text-blue-500 mx-auto mb-2" />
+                <div className="text-3xl font-black text-blue-500">{thisMonthEntries}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">this month</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Mobile stats row — above calendar */}
+          <div className="flex md:hidden w-full mb-3 gap-2">
+            <Card className="flex-1"><CardContent className="p-3 text-center">
+              <Flame className="h-4 w-4 text-amber-500 mx-auto mb-1" />
+              <div className="text-xl font-black text-amber-500">{streak}</div>
+              <div className="text-[10px] text-muted-foreground">Streak</div>
+            </CardContent></Card>
+            <Card className="flex-1"><CardContent className="p-3 text-center">
+              <BookOpen className="h-4 w-4 text-primary mx-auto mb-1" />
+              <div className="text-xl font-black text-primary">{daysJournaled}</div>
+              <div className="text-[10px] text-muted-foreground">Journaled</div>
+            </CardContent></Card>
+            <Card className="flex-1"><CardContent className="p-3 text-center">
+              <CalendarDays className="h-4 w-4 text-blue-500 mx-auto mb-1" />
+              <div className="text-xl font-black text-blue-500">{thisMonthEntries}</div>
+              <div className="text-[10px] text-muted-foreground">This Month</div>
+            </CardContent></Card>
+          </div>
+
+          {/* Calendar */}
+          <Card className="flex-1 min-w-0">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">{MONTHS[month]} {year}</CardTitle>
+                <div className="flex gap-1">
+                  <Button size="icon" variant="ghost" onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); }}><ChevronLeft className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setYear(new Date().getFullYear()); setMonth(new Date().getMonth()); }}>Today</Button>
+                  <Button size="icon" variant="ghost" onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); }}><ChevronRight className="h-4 w-4" /></Button>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-2 grid grid-cols-7 gap-1.5">
-              {DOW.map((d) => <div key={d} className="py-1 text-center text-[10px] font-semibold uppercase text-muted-foreground">{d}</div>)}
-            </div>
-            <div className="grid grid-cols-7 gap-1.5">
-              {cells.map((c, i) => {
-                const dateStr = c.cur ? `${year}-${String(month + 1).padStart(2, "0")}-${String(c.day).padStart(2, "0")}` : "";
-                const e = dateStr ? entryByDate[dateStr] : null;
-                const stats = dateStr ? statsByDate[dateStr] : null;
-                const pnl = stats?.pnl ?? null;
-                const tradeCount = stats?.count ?? null;
-                const isToday = dateStr === today;
-                const moodColor = e?.mood === "great" ? "bg-green-500/20 text-green-600" : e?.mood === "good" ? "bg-blue-500/15 text-blue-500" : e?.mood === "bad" || e?.mood === "terrible" ? "bg-red-500/15 text-red-500" : "bg-amber-500/15 text-amber-600";
-                const dayBg = pnl == null ? "" : pnl > 0 ? "bg-green-500/10" : pnl < 0 ? "bg-red-500/10" : "bg-zinc-500/10";
-                const fmtPnl = pnl != null ? `${pnl >= 0 ? "+" : "-"}$${Math.abs(pnl).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : null;
-                return (
-                  <button key={i} onClick={() => c.cur && openEntry(dateStr)} disabled={!c.cur}
-                    className={cn("flex min-h-[80px] flex-col rounded-md border-2 p-1.5 text-left transition-colors md:min-h-[100px]",
-                      c.cur ? "hover:border-primary cursor-pointer" : "opacity-20 cursor-default",
-                      isToday && "border-primary ring-1 ring-primary",
-                      pnl != null && pnl > 0 && "border-green-500/30",
-                      pnl != null && pnl < 0 && "border-red-500/30",
-                      dayBg)}>
-                    <div className={cn("text-[11px] font-semibold mb-0.5", isToday && "text-primary")}>{c.day}</div>
-                    {e && <div className={cn("rounded px-1 py-0.5 text-[8px] font-semibold mb-0.5 truncate", moodColor)}>{e.bias ? `${e.bias.slice(0,1)} · ` : ""}{e.title?.slice(0, 12) || "Entry"}</div>}
-                    {fmtPnl && dateStr && (
-                      <div className="mt-auto">
-                        <div className={cn("text-base font-black leading-tight md:text-lg", pnl! >= 0 ? "text-green-500" : "text-red-500")}>{fmtPnl}</div>
-                        {tradeCount != null && (
-                          <div className="text-[9px] font-medium text-muted-foreground/60 leading-tight">{tradeCount} trade{tradeCount !== 1 ? "s" : ""}</div>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="px-3 pb-3">
+              <div className="mb-1 grid grid-cols-7 gap-0.5">
+                {DOW.map((d) => <div key={d} className="py-1 text-center text-[9px] font-semibold uppercase text-muted-foreground">{d}</div>)}
+              </div>
+              <div className="grid grid-cols-7 gap-0.5">
+                {cells.map((c, i) => {
+                  const dateStr = c.cur ? `${year}-${String(month + 1).padStart(2, "0")}-${String(c.day).padStart(2, "0")}` : "";
+                  const e = dateStr ? entryByDate[dateStr] : null;
+                  const stats = dateStr ? statsByDate[dateStr] : null;
+                  const pnl = stats?.pnl ?? null;
+                  const tradeCount = stats?.count ?? null;
+                  const isToday = dateStr === today;
+                  const moodColor = e?.mood === "great" ? "bg-green-500/20 text-green-600" : e?.mood === "good" ? "bg-blue-500/15 text-blue-500" : e?.mood === "bad" || e?.mood === "terrible" ? "bg-red-500/15 text-red-500" : "bg-amber-500/15 text-amber-600";
+                  const dayBg = pnl == null ? "" : pnl > 0 ? "bg-green-500/10" : pnl < 0 ? "bg-red-500/10" : "bg-zinc-500/10";
+                  return (
+                    <button key={i} onClick={() => c.cur && openEntry(dateStr)} disabled={!c.cur}
+                      className={cn(
+                        "aspect-square w-full flex flex-col rounded border-2 p-1 text-left transition-colors overflow-hidden",
+                        c.cur ? "hover:border-primary cursor-pointer" : "opacity-20 cursor-default",
+                        isToday && "border-primary ring-1 ring-primary",
+                        pnl != null && pnl > 0 && "border-green-500/30",
+                        pnl != null && pnl < 0 && "border-red-500/30",
+                        dayBg
+                      )}>
+                      <div className={cn("text-[10px] font-bold leading-none", isToday && "text-primary")}>{c.day}</div>
+                      {e && (
+                        <div className={cn("mt-0.5 rounded px-0.5 text-[7px] font-semibold leading-tight truncate", moodColor)}>
+                          {e.bias?.slice(0,1)}{e.bias ? " · " : ""}{e.title?.slice(0,6) || "✓"}
+                        </div>
+                      )}
+                      {pnl != null && (
+                        <div className="mt-auto">
+                          <div className={cn("text-[9px] font-black leading-tight", pnl >= 0 ? "text-green-500" : "text-red-500")}>
+                            {fmtPnlCents(pnl)}
+                          </div>
+                          {tradeCount != null && (
+                            <div className="text-[7px] text-muted-foreground/50 leading-none">{tradeCount}t</div>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {view === "list" && (

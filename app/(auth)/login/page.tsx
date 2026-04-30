@@ -8,7 +8,7 @@ export default async function LoginPage() {
     redirect(profile.role === "admin" || profile.role === "moderator" ? "/admin" : "/dashboard");
   }
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center p-4" style={{ background: "radial-gradient(ellipse at top, #1a1a1a 0%, #0a0a0a 50%, #000000 100%)" }}>
       <LoginForm />
     </div>
   );
