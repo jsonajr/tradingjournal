@@ -23,9 +23,14 @@ type Trade = {
 type AdjacentTrades = { prev: string | null; next: string | null };
 
 const TV_SYMBOL_MAP: Record<string, string> = {
-  ES: "CME_MINI:ES1!", NQ: "CME_MINI:NQ1!", MES: "CME_MINI:MES1!",
-  MNQ: "CME_MINI:MNQ1!", CL: "NYMEX:CL1!", GC: "COMEX:GC1!",
-  RTY: "CME_MINI:RTY1!", YM: "CBOT_MINI:YM1!",
+  ES:  "AMEX:SPY",    // S&P 500 proxy
+  MES: "AMEX:SPY",
+  NQ:  "NASDAQ:QQQ",  // Nasdaq proxy
+  MNQ: "NASDAQ:QQQ",
+  YM:  "AMEX:DIA",    // Dow proxy
+  RTY: "AMEX:IWM",    // Russell proxy
+  CL:  "TVC:USOIL",   // Crude oil
+  GC:  "TVC:GOLD",    // Gold
 };
 
 const INTERVALS = [

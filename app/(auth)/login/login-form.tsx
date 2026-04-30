@@ -18,6 +18,9 @@ function LoginFormInner() {
   const [password, setPassword] = useState("");
   const [stayLoggedIn, setStayLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [sendingReset, setSendingReset] = useState(false);
   const error = params.get("error");
 
   async function handleSignIn(e: React.FormEvent) {
@@ -40,6 +43,48 @@ function LoginFormInner() {
     toast.success("Welcome back!");
     router.push(dest);
     router.refresh();
+  }
+
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!forgotEmail) { toast.error("Enter your email address"); return; }
+    setSendingReset(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setSendingReset(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Password reset email sent! Check your inbox.");
+    setShowForgot(false);
+    setForgotEmail("");
+  }
+
+  if (showForgot) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <Link href="/" className="mb-2 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <TrendingUp className="h-4 w-4 text-primary" /> JsonTrades
+          </Link>
+          <CardTitle>Reset Password</CardTitle>
+          <CardDescription>Enter your email and we&apos;ll send you a reset link.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="forgot-email">Email</Label>
+              <Input id="forgot-email" type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="you@example.com" autoFocus />
+            </div>
+            <Button type="submit" className="w-full" disabled={sendingReset}>
+              {sendingReset ? "Sending..." : "Send Reset Link"}
+            </Button>
+          </form>
+          <button onClick={() => setShowForgot(false)} className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground">
+            ← Back to sign in
+          </button>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -68,17 +113,16 @@ function LoginFormInner() {
             <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <button type="button" onClick={() => { setForgotEmail(email); setShowForgot(true); }} className="text-xs text-primary hover:underline">
+                Forgot password?
+              </button>
+            </div>
             <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
           </div>
           <div className="flex items-center gap-2">
-            <input
-              id="stay-logged-in"
-              type="checkbox"
-              checked={stayLoggedIn}
-              onChange={(e) => setStayLoggedIn(e.target.checked)}
-              className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
-            />
+            <input id="stay-logged-in" type="checkbox" checked={stayLoggedIn} onChange={(e) => setStayLoggedIn(e.target.checked)} className="h-4 w-4 rounded border-border accent-primary cursor-pointer" />
             <Label htmlFor="stay-logged-in" className="cursor-pointer text-sm font-normal text-muted-foreground">Stay logged in</Label>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
