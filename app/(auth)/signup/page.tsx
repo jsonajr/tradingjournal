@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { TrendingUp, Lock } from "lucide-react";
 import { toast } from "sonner";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -26,7 +26,6 @@ export default function SignupPage() {
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     setLoading(true);
 
-    // Validate invite code
     const { data: invite, error: inviteErr } = await supabase
       .from("invite_codes")
       .select("id, used_at, expires_at")
@@ -49,7 +48,6 @@ export default function SignupPage() {
       return;
     }
 
-    // Create account
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -58,7 +56,6 @@ export default function SignupPage() {
     setLoading(false);
     if (error) { toast.error(error.message); return; }
 
-    // Mark invite as used (best-effort — will also be done server-side via trigger if set up)
     if (data.user) {
       await supabase.from("invite_codes").update({ used_at: new Date().toISOString(), used_by: data.user.id }).eq("id", invite.id);
     }
@@ -74,55 +71,63 @@ export default function SignupPage() {
   }
 
   return (
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <Link href="/" className="mb-2 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+          <TrendingUp className="h-4 w-4 text-primary" /> jsontrades
+        </Link>
+        <CardTitle>Create your account</CardTitle>
+        <CardDescription className="flex items-center gap-1.5">
+          <Lock className="h-3.5 w-3.5 text-amber-500" />
+          Invite-only — you need a code to sign up
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSignUp} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="inviteCode">Invite Code</Label>
+            <Input
+              id="inviteCode"
+              type="text"
+              required
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+              placeholder="XXXX-XXXX"
+              autoComplete="off"
+              className="font-mono tracking-widest uppercase"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="fullName">Full name</Label>
+            <Input id="fullName" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Trader" autoComplete="name" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" autoComplete="new-password" />
+          </div>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Verifying & creating account..." : "Sign up"}
+          </Button>
+        </form>
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link href="/login" className="font-medium text-primary hover:underline">Sign in</Link>
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function SignupPage() {
+  return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <Link href="/" className="mb-2 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <TrendingUp className="h-4 w-4 text-primary" /> jsontrades
-          </Link>
-          <CardTitle>Create your account</CardTitle>
-          <CardDescription className="flex items-center gap-1.5">
-            <Lock className="h-3.5 w-3.5 text-amber-500" />
-            Invite-only — you need a code to sign up
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignUp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="inviteCode">Invite Code</Label>
-              <Input
-                id="inviteCode"
-                type="text"
-                required
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                placeholder="XXXX-XXXX"
-                autoComplete="off"
-                className="font-mono tracking-widest uppercase"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full name</Label>
-              <Input id="fullName" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Trader" autoComplete="name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" autoComplete="new-password" />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Verifying & creating account..." : "Sign up"}
-            </Button>
-          </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-primary hover:underline">Sign in</Link>
-          </p>
-        </CardContent>
-      </Card>
+      <Suspense fallback={<div className="w-full max-w-md animate-pulse rounded-lg bg-muted h-96" />}>
+        <SignupForm />
+      </Suspense>
     </div>
   );
 }
