@@ -5,17 +5,18 @@ import { LayoutDashboard, Settings, Shield, LogOut, TrendingUp, PlusCircle, Uplo
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { Profile } from "@/lib/auth";
 
 const NAV = [
-  { href: "/dashboard",  label: "Dashboard",               icon: LayoutDashboard },
-  { href: "/trades",     label: "Trades",                  icon: List },
-  { href: "/trades/new", label: "New Trade",               icon: PlusCircle },
-  { href: "/import",     label: "Import CSV",              icon: Upload },
-  { href: "/eval",       label: "Eval Expenses & Payouts", icon: DollarSign },
-  { href: "/journal/calendar", label: "Playbook Calendar", icon: CalendarDays },
-  { href: "/strategies", label: "Strategies",              icon: BookOpen },
-  { href: "/settings",   label: "Settings",                icon: Settings },
+  { href: "/dashboard",        label: "Dashboard",               icon: LayoutDashboard },
+  { href: "/trades",           label: "Trades",                  icon: List },
+  { href: "/trades/new",       label: "New Trade",               icon: PlusCircle },
+  { href: "/import",           label: "Import CSV",              icon: Upload },
+  { href: "/eval",             label: "Eval Expenses & Payouts", icon: DollarSign },
+  { href: "/journal/calendar", label: "Playbook Calendar",       icon: CalendarDays },
+  { href: "/strategies",       label: "Strategies",              icon: BookOpen },
+  { href: "/settings",         label: "Settings",                icon: Settings },
 ];
 
 const ADMIN_NAV = [
@@ -79,9 +80,12 @@ export function AppSidebar({ profile }: { profile: Profile }) {
         )}
       </nav>
       <div className="border-t p-3">
-        <div className="mb-2 px-2">
-          <div className="truncate text-sm font-medium">{profile.full_name || profile.email}</div>
-          <div className="text-xs uppercase tracking-wide text-primary">{profile.role} · {profile.plan}</div>
+        <div className="mb-2 flex items-center justify-between px-2">
+          <div>
+            <div className="truncate text-sm font-medium">{profile.full_name || profile.email}</div>
+            <div className="text-xs uppercase tracking-wide text-primary">{profile.role} · {profile.plan}</div>
+          </div>
+          <ThemeToggle />
         </div>
         <Button variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={signOut}>
           <LogOut className="h-4 w-4" /> Sign out
