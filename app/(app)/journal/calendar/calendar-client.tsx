@@ -132,7 +132,7 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
       </div>
 
       {view === "cal" && (
-        <div className="flex flex-col gap-4 max-w-3xl mx-auto md:max-w-5xl">
+        <div className="flex flex-col gap-4 max-w-3xl mx-auto md:max-w-4xl">
 
           {/* Top stats bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -150,8 +150,8 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
               return (<>
                 <Card>
                   <CardContent className="p-3 md:p-4">
-                    <div className="text-[10px] md:text-xs uppercase tracking-wide text-muted-foreground mb-1">Month P&amp;L</div>
-                    <div className={cn("text-xl md:text-2xl font-black tabular-nums", monthPnl >= 0 ? "text-green-500" : "text-red-500")}>
+                    <div className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Month P&amp;L</div>
+                    <div className={cn("text-xl md:text-xl font-black tabular-nums", monthPnl >= 0 ? "text-green-500" : "text-red-500")}>
                       {fmtPnlCents(monthPnl)}
                     </div>
                     <div className="text-[10px] md:text-xs text-muted-foreground mt-0.5">{winDays}W · {lossDays}L</div>
@@ -159,22 +159,22 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                 </Card>
                 <Card>
                   <CardContent className="p-3 md:p-4">
-                    <div className="text-[10px] md:text-xs uppercase tracking-wide text-muted-foreground mb-1">Win Rate</div>
-                    <div className="text-xl md:text-2xl font-black text-primary">{winRate != null ? `${winRate}%` : "—"}</div>
+                    <div className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Win Rate</div>
+                    <div className="text-xl md:text-xl font-black text-primary">{winRate != null ? `${winRate}%` : "—"}</div>
                     <div className="text-[10px] md:text-xs text-muted-foreground mt-0.5">{tradedDays} trading days</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-3 md:p-4">
-                    <div className="text-[10px] md:text-xs uppercase tracking-wide text-muted-foreground mb-1">Best Day</div>
-                    <div className="text-xl md:text-2xl font-black text-green-500">{bestDay != null ? fmtPnlCents(bestDay) : "—"}</div>
+                    <div className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Best Day</div>
+                    <div className="text-xl md:text-xl font-black text-green-500">{bestDay != null ? fmtPnlCents(bestDay) : "—"}</div>
                     <div className="text-[10px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1"><Flame className="h-3 w-3 text-amber-500" />{streak} day streak</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-3 md:p-4">
-                    <div className="text-[10px] md:text-xs uppercase tracking-wide text-muted-foreground mb-1">Worst Day</div>
-                    <div className="text-xl md:text-2xl font-black text-red-500">{worstDay != null ? fmtPnlCents(worstDay) : "—"}</div>
+                    <div className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Worst Day</div>
+                    <div className="text-xl md:text-xl font-black text-red-500">{worstDay != null ? fmtPnlCents(worstDay) : "—"}</div>
                     <div className="text-[10px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1"><BookOpen className="h-3 w-3 text-primary" />{thisMonthEntries} journaled</div>
                   </CardContent>
                 </Card>
@@ -196,7 +196,7 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
             </CardHeader>
             <CardContent className="px-3 pb-4">
               <div className="mb-1 grid grid-cols-7 gap-1">
-                {DOW.map((d) => <div key={d} className="py-1 text-center text-[10px] md:text-xs font-semibold uppercase tracking-wider text-muted-foreground">{d}</div>)}
+                {DOW.map((d) => <div key={d} className="py-1 text-center text-[10px] md:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{d}</div>)}
               </div>
               <div className="grid grid-cols-7 gap-1">
                 {cells.map((c, i) => {
@@ -210,21 +210,21 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                   return (
                     <button key={i} onClick={() => c.cur && openEntry(dateStr)} disabled={!c.cur}
                       className={cn(
-                        "relative aspect-square w-full flex flex-col rounded-lg border-2 p-1.5 md:p-2 transition-all overflow-hidden",
+                        "relative aspect-square w-full flex flex-col rounded-lg border-2 p-1.5 md:p-1.5 transition-all overflow-hidden",
                         c.cur ? "hover:border-primary cursor-pointer" : "opacity-10 cursor-default",
                         isToday ? "border-primary ring-2 ring-primary ring-offset-1 ring-offset-background" : pnl != null && pnl > 0 ? "border-green-500/40" : pnl != null && pnl < 0 ? "border-red-500/40" : "border-border",
                         dayBg
                       )}>
                       {/* Day number */}
                       <span className={cn(
-                        "text-[11px] md:text-sm font-bold leading-none",
+                        "text-[11px] md:text-xs font-bold leading-none",
                         isToday ? "text-primary" : "text-muted-foreground"
                       )}>{c.cur ? c.day : ""}</span>
 
                       {/* Journal mood dot */}
                       {e && (
                         <span className={cn(
-                          "absolute top-1.5 right-1.5 h-1.5 w-1.5 md:h-2 md:w-2 rounded-full",
+                          "absolute top-1.5 right-1.5 h-1.5 w-1.5 md:h-1.5 md:w-1.5 rounded-full",
                           e.mood === "great" ? "bg-green-500" : e.mood === "good" ? "bg-blue-400" : e.mood === "bad" || e.mood === "terrible" ? "bg-red-500" : "bg-amber-400"
                         )} />
                       )}
@@ -234,13 +234,13 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                         <div className="flex-1 flex flex-col items-center justify-center gap-0.5 -mt-1">
                           <span className={cn(
                             "font-black leading-none tabular-nums text-center",
-                            "text-[10px] sm:text-[11px] md:text-sm",
+                            "text-[10px] sm:text-[11px] md:text-xs",
                             pnl >= 0 ? "text-green-500" : "text-red-500"
                           )}>
                             {fmtPnlCents(pnl)}
                           </span>
                           {tradeCount != null && (
-                            <span className="text-[8px] md:text-[10px] text-muted-foreground/50 leading-none">
+                            <span className="text-[8px] md:text-[9px] text-muted-foreground/50 leading-none">
                               {tradeCount} {tradeCount === 1 ? "trade" : "trades"}
                             </span>
                           )}
