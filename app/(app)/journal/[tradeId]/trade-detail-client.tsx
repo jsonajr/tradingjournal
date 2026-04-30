@@ -5,10 +5,19 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Trash2, TrendingUp, TrendingDown, DollarSign, Target, BarChart2, Clock, Save, ChevronLeft, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowLeft, Trash2, TrendingUp, TrendingDown, BarChart2, Save, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { fmtMoney } from "@/lib/utils";
 import { toast } from "sonner";
+
+const SYMBOLS = ["ES","NQ","MES","MNQ","CL","GC","RTY","YM","Other"];
+const SETUPS  = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other"];
+const SESSIONS = ["London","NY Open","NY AM","NY PM","Asia"];
+const GRADES   = ["A+","A","B","C","D"];
 
 type Trade = {
   id: string; trade_date: string; symbol: string;
@@ -16,21 +25,22 @@ type Trade = {
   entry_price: number | null; exit_price: number | null; stop_price: number | null;
   pnl: number; commission: number; r_multiple: number | null;
   setup: string | null; session: string | null; grade: string | null;
-  notes: string | null;
+  notes: string | null; account_id: string | null;
   accounts: { name: string; firm: string | null } | null;
 };
 
+type Account = { id: string; name: string; firm: string | null };
 type AdjacentTrades = { prev: string | null; next: string | null };
 
 const TV_SYMBOL_MAP: Record<string, string> = {
-  ES:  "AMEX:SPY",    // S&P 500 proxy
+  ES:  "AMEX:SPY",
   MES: "AMEX:SPY",
-  NQ:  "NASDAQ:QQQ",  // Nasdaq proxy
+  NQ:  "NASDAQ:QQQ",
   MNQ: "NASDAQ:QQQ",
-  YM:  "AMEX:DIA",    // Dow proxy
-  RTY: "AMEX:IWM",    // Russell proxy
-  CL:  "TVC:USOIL",   // Crude oil
-  GC:  "TVC:GOLD",    // Gold
+  YM:  "AMEX:DIA",
+  RTY: "AMEX:IWM",
+  CL:  "TVC:USOIL",
+  GC:  "TVC:GOLD",
 };
 
 const INTERVALS = [
@@ -44,14 +54,21 @@ const INTERVALS = [
   { label: "D",   value: "D" },
 ];
 
-function TradingViewWidget({ symbol, interval, entry, exit, stop, direction, tradeDate }: {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-medium uppercase tracking-wide">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function TradingViewWidget({ symbol, interval, entry, exit, stop, direction }: {
   symbol: string; interval: string;
   entry: number | null; exit: number | null; stop: number | null;
-  direction: "Long" | "Short"; tradeDate: string;
+  direction: "Long" | "Short";
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const widgetRef = useRef<unknown>(null);
-  // Strip expiry suffix e.g. MNQM6 → MNQ, ESZ5 → ES
   const baseSymbol = symbol.replace(/[A-Z]\d+$/, "");
   const tvSymbol = TV_SYMBOL_MAP[baseSymbol] ?? TV_SYMBOL_MAP[symbol] ?? `CME_MINI:${baseSymbol}1!`;
 
@@ -59,59 +76,31 @@ function TradingViewWidget({ symbol, interval, entry, exit, stop, direction, tra
     if (!containerRef.current) return;
     const containerId = `tv_chart_${symbol}_${interval}`;
     containerRef.current.innerHTML = `<div id="${containerId}" style="height:100%;width:100%"></div>`;
-
     const script = document.createElement("script");
     script.src = "https://s3.tradingview.com/tv.js";
     script.async = true;
     script.onload = () => {
       if (typeof window.TradingView === "undefined") return;
-
-      // Build studies with price lines for entry/exit/stop
-      const studies: string[] = ["Volume@tv-basicstudies"];
-      const lines: Array<{ price: number; color: string; title: string }> = [];
-      if (entry) lines.push({ price: entry, color: "#22c55e", title: "Entry" });
-      if (exit)  lines.push({ price: exit,  color: direction === "Long" && exit > (entry ?? 0) ? "#22c55e" : "#ef4444", title: "Exit" });
-      if (stop)  lines.push({ price: stop,  color: "#ef4444", title: "Stop" });
-
-      widgetRef.current = new window.TradingView.widget({
-        autosize: true,
-        symbol: tvSymbol,
-        interval,
+      new window.TradingView.widget({
+        autosize: true, symbol: tvSymbol, interval,
         timezone: "America/New_York",
         theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
-        style: "1",
-        locale: "en",
-        enable_publishing: false,
-        allow_symbol_change: true,
-        hide_side_toolbar: false,
+        style: "1", locale: "en", enable_publishing: false,
+        allow_symbol_change: true, hide_side_toolbar: false,
         container_id: containerId,
-        studies,
-        overrides: {
-          "scalesProperties.showLeftScale": false,
-        },
-        // Price lines for entry/exit/stop
-        ...(lines.length > 0 ? {
-          drawings_access: { type: "all", tools: [{ name: "Horizontal Line" }] },
-        } : {}),
+        studies: ["Volume@tv-basicstudies"],
+        overrides: { "scalesProperties.showLeftScale": false },
       });
     };
-
-    const existingScript = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
-    if (existingScript) {
-      script.onload?.(new Event("load"));
-    } else {
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      if (containerRef.current) containerRef.current.innerHTML = "";
-    };
+    const existing = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
+    if (existing) script.onload?.(new Event("load"));
+    else document.head.appendChild(script);
+    return () => { if (containerRef.current) containerRef.current.innerHTML = ""; };
   }, [tvSymbol, interval]);
 
   return (
     <div className="relative">
       <div ref={containerRef} className="h-[480px] w-full rounded-b-lg overflow-hidden" />
-      {/* Entry/Exit/Stop price overlay legend */}
       {(entry || exit || stop) && (
         <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
           {entry && (
@@ -138,13 +127,144 @@ function TradingViewWidget({ symbol, interval, entry, exit, stop, direction, tra
   );
 }
 
-export function TradeDetailClient({ trade, adjacent }: { trade: Trade; adjacent?: AdjacentTrades }) {
+function EditTradeModal({ trade, accounts, onClose, onSaved }: {
+  trade: Trade; accounts: Account[]; onClose: () => void; onSaved: (t: Trade) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    trade_date:  trade.trade_date,
+    account_id:  trade.account_id ?? "",
+    symbol:      trade.symbol,
+    direction:   trade.direction,
+    contracts:   String(trade.contracts),
+    pnl:         String(trade.pnl),
+    entry_price: trade.entry_price != null ? String(trade.entry_price) : "",
+    exit_price:  trade.exit_price  != null ? String(trade.exit_price)  : "",
+    stop_price:  trade.stop_price  != null ? String(trade.stop_price)  : "",
+    commission:  String(trade.commission),
+    setup:       trade.setup   ?? "",
+    session:     trade.session ?? "",
+    grade:       trade.grade   ?? "",
+    notes:       trade.notes   ?? "",
+  });
+  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function save() {
+    if (!form.pnl) { toast.error("P&L is required"); return; }
+    setSaving(true);
+    const res = await fetch("/api/trades/update", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: trade.id, ...form }),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) { toast.error(data.error ?? "Failed to save"); return; }
+    toast.success("Trade updated!");
+    onSaved(data.trade);
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Trade — {trade.symbol} {trade.trade_date}</DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Date">
+            <Input type="date" value={form.trade_date} onChange={(e) => set("trade_date", e.target.value)} />
+          </Field>
+          <Field label="Account">
+            <Select value={form.account_id} onValueChange={(v) => set("account_id", v)}>
+              <SelectTrigger><SelectValue placeholder="No account" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No account</SelectItem>
+                {accounts.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>{a.name}{a.firm ? ` (${a.firm})` : ""}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Symbol">
+            <Select value={SYMBOLS.includes(form.symbol) ? form.symbol : "Other"} onValueChange={(v) => set("symbol", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{SYMBOLS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Direction">
+            <Select value={form.direction} onValueChange={(v) => set("direction", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Long">Long</SelectItem>
+                <SelectItem value="Short">Short</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Contracts">
+            <Input type="number" min="1" value={form.contracts} onChange={(e) => set("contracts", e.target.value)} />
+          </Field>
+          <Field label="P&L ($)">
+            <Input type="number" step="0.01" value={form.pnl} onChange={(e) => set("pnl", e.target.value)} placeholder="0.00" />
+          </Field>
+          <Field label="Entry Price">
+            <Input type="number" step="0.25" value={form.entry_price} onChange={(e) => set("entry_price", e.target.value)} placeholder="0.00" />
+          </Field>
+          <Field label="Exit Price">
+            <Input type="number" step="0.25" value={form.exit_price} onChange={(e) => set("exit_price", e.target.value)} placeholder="0.00" />
+          </Field>
+          <Field label="Stop Price">
+            <Input type="number" step="0.25" value={form.stop_price} onChange={(e) => set("stop_price", e.target.value)} placeholder="0.00" />
+          </Field>
+          <Field label="Commission ($)">
+            <Input type="number" step="0.01" value={form.commission} onChange={(e) => set("commission", e.target.value)} />
+          </Field>
+          <Field label="Setup">
+            <Select value={SETUPS.includes(form.setup) ? form.setup : "Other"} onValueChange={(v) => set("setup", v)}>
+              <SelectTrigger><SelectValue placeholder="Select setup" /></SelectTrigger>
+              <SelectContent>{SETUPS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Session">
+            <Select value={form.session} onValueChange={(v) => set("session", v)}>
+              <SelectTrigger><SelectValue placeholder="Select session" /></SelectTrigger>
+              <SelectContent>{SESSIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Grade">
+            <Select value={form.grade} onValueChange={(v) => set("grade", v)}>
+              <SelectTrigger><SelectValue placeholder="Select grade" /></SelectTrigger>
+              <SelectContent>{GRADES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Notes">
+              <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)}
+                placeholder="Execution notes, mistakes, what you did well..."
+                className="min-h-[80px]" />
+            </Field>
+          </div>
+        </div>
+        <DialogFooter className="mt-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function TradeDetailClient({ trade: initialTrade, adjacent, accounts }: {
+  trade: Trade; adjacent?: AdjacentTrades; accounts: Account[];
+}) {
   const router = useRouter();
-  const net = trade.pnl - trade.commission;
-  const isWin = net >= 0;
+  const [trade, setTrade] = useState(initialTrade);
   const [interval, setInterval] = useState("5");
   const [notes, setNotes] = useState(trade.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+
+  const net = trade.pnl - trade.commission;
+  const isWin = net >= 0;
 
   const rr = trade.entry_price && trade.stop_price && trade.exit_price
     ? (() => {
@@ -161,8 +281,7 @@ export function TradeDetailClient({ trade, adjacent }: { trade: Trade; adjacent?
   async function deleteTrade() {
     if (!confirm("Delete this trade? This cannot be undone.")) return;
     const res = await fetch("/api/trades", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      method: "DELETE", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: trade.id }),
     });
     if (!res.ok) { toast.error("Failed to delete"); return; }
@@ -174,13 +293,20 @@ export function TradeDetailClient({ trade, adjacent }: { trade: Trade; adjacent?
   async function saveNotes() {
     setSavingNotes(true);
     const res = await fetch("/api/trades/update", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: trade.id, notes }),
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: trade.id, ...trade, notes }),
     });
     setSavingNotes(false);
     if (!res.ok) { toast.error("Failed to save notes"); return; }
     toast.success("Notes saved");
+    setTrade((t) => ({ ...t, notes }));
+  }
+
+  function handleSaved(updated: Trade) {
+    setTrade(updated);
+    setNotes(updated.notes ?? "");
+    setEditOpen(false);
+    router.refresh();
   }
 
   return (
@@ -190,7 +316,7 @@ export function TradeDetailClient({ trade, adjacent }: { trade: Trade; adjacent?
         <Button variant="ghost" size="sm" asChild>
           <Link href="/trades"><ArrowLeft className="mr-1 h-4 w-4" />Back to Trades</Link>
         </Button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {adjacent?.prev && (
             <Button variant="outline" size="sm" onClick={() => router.push(`/journal/${adjacent.prev}`)}>
               <ChevronLeft className="mr-1 h-3.5 w-3.5" />Prev
@@ -201,6 +327,9 @@ export function TradeDetailClient({ trade, adjacent }: { trade: Trade; adjacent?
               Next<ChevronRight className="ml-1 h-3.5 w-3.5" />
             </Button>
           )}
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-1 h-3.5 w-3.5" />Edit Trade
+          </Button>
           <Button variant="destructive" size="sm" onClick={deleteTrade}>
             <Trash2 className="mr-1 h-3.5 w-3.5" />Delete
           </Button>
@@ -254,17 +383,14 @@ export function TradeDetailClient({ trade, adjacent }: { trade: Trade; adjacent?
         ))}
       </div>
 
-      {/* Chart + Info side by side on desktop */}
+      {/* Chart + Info */}
       <div className="grid gap-4 lg:grid-cols-3 mb-6">
-        {/* Chart takes 2/3 */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <BarChart2 className="h-4 w-4" />
-                {trade.symbol} · TradingView
+                <BarChart2 className="h-4 w-4" />{trade.symbol} · TradingView
               </CardTitle>
-              {/* Timeframe selector */}
               <div className="flex gap-1 flex-wrap">
                 {INTERVALS.map((iv) => (
                   <button key={iv.value} onClick={() => setInterval(iv.value)}
@@ -277,18 +403,13 @@ export function TradeDetailClient({ trade, adjacent }: { trade: Trade; adjacent?
           </CardHeader>
           <CardContent className="p-0 overflow-hidden rounded-b-lg">
             <TradingViewWidget
-              symbol={trade.symbol}
-              interval={interval}
-              entry={trade.entry_price}
-              exit={trade.exit_price}
-              stop={trade.stop_price}
-              direction={trade.direction}
-              tradeDate={trade.trade_date}
+              symbol={trade.symbol} interval={interval}
+              entry={trade.entry_price} exit={trade.exit_price}
+              stop={trade.stop_price} direction={trade.direction}
             />
           </CardContent>
         </Card>
 
-        {/* Info takes 1/3 */}
         <div className="space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-sm">Execution</CardTitle></CardHeader>
@@ -338,6 +459,15 @@ export function TradeDetailClient({ trade, adjacent }: { trade: Trade; adjacent?
           </Card>
         </div>
       </div>
+
+      {editOpen && (
+        <EditTradeModal
+          trade={trade}
+          accounts={accounts}
+          onClose={() => setEditOpen(false)}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   );
 }

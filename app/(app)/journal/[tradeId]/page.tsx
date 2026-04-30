@@ -10,9 +10,20 @@ export default async function TradeDetailPage({ params }: { params: Promise<{ tr
   const { user } = await requireRole(["user", "moderator", "admin"]);
   const sb = await createClient();
 
-  const [{ data: trade }, { data: allTrades }] = await Promise.all([
-    sb.from("trades").select("*, accounts(name, firm)").eq("id", tradeId).eq("user_id", user.id).maybeSingle(),
-    sb.from("trades").select("id").eq("user_id", user.id).order("trade_date", { ascending: false }).order("created_at", { ascending: false }),
+  const [{ data: trade }, { data: allTrades }, { data: accounts }] = await Promise.all([
+    sb.from("trades")
+      .select("id, trade_date, symbol, direction, contracts, entry_price, exit_price, stop_price, pnl, commission, r_multiple, setup, session, grade, notes, account_id, accounts(name, firm)")
+      .eq("id", tradeId)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    sb.from("trades")
+      .select("id")
+      .eq("user_id", user.id)
+      .order("trade_date", { ascending: false })
+      .order("created_at", { ascending: false }),
+    sb.from("accounts")
+      .select("id, name, firm")
+      .eq("user_id", user.id),
   ]);
 
   if (!trade) notFound();
@@ -24,5 +35,5 @@ export default async function TradeDetailPage({ params }: { params: Promise<{ tr
     next: idx < ids.length - 1 ? ids[idx + 1] : null,
   };
 
-  return <TradeDetailClient trade={trade} adjacent={adjacent} />;
+  return <TradeDetailClient trade={trade} adjacent={adjacent} accounts={accounts ?? []} />;
 }
