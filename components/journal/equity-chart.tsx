@@ -41,14 +41,19 @@ export function EquityChart({ series }: { series: { x: string; y: number }[] }) 
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
-      x: { ticks: { color: "#5a6480", font: { size: 10 } }, grid: { color: "rgba(255,255,255,0.04)" } },
+      x: {
+        ticks: { color: "#64748b", font: { size: 10 } },
+        grid: { color: "rgba(100,116,139,0.12)" },
+        border: { color: "rgba(100,116,139,0.2)" },
+      },
       y: {
         ticks: {
-          color: "#5a6480",
+          color: "#64748b",
           font: { size: 10 },
           callback: (v: number | string) => "$" + Number(v).toFixed(0),
         },
-        grid: { color: "rgba(255,255,255,0.04)" },
+        grid: { color: "rgba(100,116,139,0.12)" },
+        border: { color: "rgba(100,116,139,0.2)" },
       },
     },
   };

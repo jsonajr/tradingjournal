@@ -165,7 +165,7 @@ export function DashboardStats({
       <div className="mb-4 grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
         <Card><CardContent className="p-3 md:p-4">
           <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Net P&L</div>
-          <div className={`text-lg sm:text-xl md:text-2xl font-black leading-tight ${totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
+          <div className={`text-lg sm:text-xl md:text-2xl font-black leading-tight ${totalPnl >= 0 ? "text-green-500" : "text-red-500"}`}>
             {fmtCompact(totalPnl, true)}
           </div>
           <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">{trades.length} trades</div>
@@ -173,13 +173,13 @@ export function DashboardStats({
 
         <Card><CardContent className="p-3 md:p-4">
           <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Win Rate</div>
-          <div className="text-lg sm:text-xl md:text-2xl font-black leading-tight text-blue-400">{winRate.toFixed(1)}%</div>
+          <div className="text-lg sm:text-xl md:text-2xl font-black leading-tight text-blue-600">{winRate.toFixed(1)}%</div>
           <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">{wins.length}W / {losses.length}L</div>
         </CardContent></Card>
 
         <Card><CardContent className="p-3 md:p-4">
           <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Profit Factor</div>
-          <div className={`text-lg sm:text-xl md:text-2xl font-black leading-tight ${pf >= 1.5 ? "text-green-400" : pf >= 1 ? "text-amber-400" : "text-red-400"}`}>
+          <div className={`text-lg sm:text-xl md:text-2xl font-black leading-tight ${pf >= 1.5 ? "text-green-500" : pf >= 1 ? "text-amber-500" : "text-red-500"}`}>
             {pf === 999 ? "∞" : pf.toFixed(2)}
           </div>
         </CardContent></Card>
@@ -187,16 +187,16 @@ export function DashboardStats({
         <Card><CardContent className="p-3 md:p-4">
           <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Avg W / L</div>
           <div className="flex items-baseline gap-0.5 flex-wrap">
-            <span className="text-base sm:text-lg md:text-xl font-black text-green-400 leading-tight">{avgWin > 0 ? fmtCompact(avgWin) : "—"}</span>
+            <span className="text-base sm:text-lg md:text-xl font-black text-green-500 leading-tight">{avgWin > 0 ? fmtCompact(avgWin) : "—"}</span>
             <span className="text-muted-foreground text-[9px]">/</span>
-            <span className="text-base sm:text-lg md:text-xl font-black text-red-400 leading-tight">{avgLoss > 0 ? fmtCompact(-avgLoss, true) : "—"}</span>
+            <span className="text-base sm:text-lg md:text-xl font-black text-red-500 leading-tight">{avgLoss > 0 ? fmtCompact(-avgLoss, true) : "—"}</span>
           </div>
           <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">per trade</div>
         </CardContent></Card>
 
         <Card><CardContent className="p-3 md:p-4">
           <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best Day %</div>
-          <div className={`text-sm sm:text-base md:text-2xl font-black leading-tight ${bestDay && bestDay[1] >= 0 ? "text-green-400" : "text-red-400"}`}>
+          <div className={`text-sm sm:text-base md:text-2xl font-black leading-tight ${bestDay && bestDay[1] >= 0 ? "text-green-500" : "text-red-500"}`}>
             {bestDayPct != null ? `${bestDayPct.toFixed(1)}%` : "—"}
           </div>
           <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5 truncate">{bestDay ? `${bestDay[0]} · ${fmtCompact(bestDay[1])}` : "No data"}</div>
@@ -265,7 +265,7 @@ export function DashboardStats({
                     <TableCell className="text-xs">{tr.trade_date}</TableCell>
                     <TableCell className="font-semibold">{tr.symbol}</TableCell>
                     <TableCell><Badge className={tr.direction === "Long" ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}>{tr.direction}</Badge></TableCell>
-                    <TableCell className={`font-bold text-base ${net >= 0 ? "text-green-400" : "text-red-400"}`}>{fmtCompact(net, true)}</TableCell>
+                    <TableCell className={`font-bold text-base ${net >= 0 ? "text-green-500" : "text-red-500"}`}>{fmtCompact(net, true)}</TableCell>
                     <TableCell className="text-xs">{tr.r_multiple != null ? `${tr.r_multiple}R` : "—"}</TableCell>
                   </TableRow>
                 );

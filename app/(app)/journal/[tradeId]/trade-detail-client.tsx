@@ -356,7 +356,7 @@ export function TradeDetailClient({ trade: initialTrade, adjacent, accounts }: {
           </div>
         </div>
         <div className="ml-auto text-right">
-          <div className={`text-3xl font-black md:text-4xl truncate ${isWin ? "text-green-400" : "text-red-400"}`}>
+          <div className={`text-3xl font-black md:text-4xl truncate ${isWin ? "text-green-500" : "text-red-500"}`}>
             {net >= 0 ? "+" : ""}{fmtMoney(Math.abs(net))}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">Net · ${trade.commission.toFixed(2)} fees</div>

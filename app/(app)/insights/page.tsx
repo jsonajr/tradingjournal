@@ -87,32 +87,32 @@ export default async function InsightsPage() {
       <Section title="Overview" icon={<BarChart2 className="h-4 w-4" />}>
         <StatGrid>
           <Stat label="Total Trades" value={t.length.toString()} sub="all time" />
-          <Stat label="Total Net P&L" value={fmtMoney(totalPnl, true)} color={totalPnl >= 0 ? "text-green-400" : "text-red-400"} />
-          <Stat label="Gross P&L" value={fmtMoney(totalGrossPnl, true)} color={totalGrossPnl >= 0 ? "text-green-400" : "text-red-400"} />
-          <Stat label="Total Commissions" value={fmtMoney(totalCommission)} color="text-amber-400" />
-          <Stat label="Win Rate" value={`${winRate.toFixed(1)}%`} sub={`${wins.length}W / ${losses.length}L / ${breakeven.length}BE`} color="text-blue-400" />
-          <Stat label="Profit Factor" value={pf === 999 ? "∞" : pf.toFixed(2)} color={pf >= 1.5 ? "text-green-400" : pf >= 1 ? "text-amber-400" : "text-red-400"} />
+          <Stat label="Total Net P&L" value={fmtMoney(totalPnl, true)} color={totalPnl >= 0 ? "text-green-500" : "text-red-500"} />
+          <Stat label="Gross P&L" value={fmtMoney(totalGrossPnl, true)} color={totalGrossPnl >= 0 ? "text-green-500" : "text-red-500"} />
+          <Stat label="Total Commissions" value={fmtMoney(totalCommission)} color="text-amber-500" />
+          <Stat label="Win Rate" value={`${winRate.toFixed(1)}%`} sub={`${wins.length}W / ${losses.length}L / ${breakeven.length}BE`} color="text-blue-600" />
+          <Stat label="Profit Factor" value={pf === 999 ? "∞" : pf.toFixed(2)} color={pf >= 1.5 ? "text-green-500" : pf >= 1 ? "text-amber-500" : "text-red-500"} />
         </StatGrid>
       </Section>
 
       {/* Trade metrics */}
       <Section title="Trade Metrics" icon={<Target className="h-4 w-4" />}>
         <StatGrid>
-          <Stat label="Avg Win" value={avgWin > 0 ? fmtMoney(avgWin) : "—"} color="text-green-400" />
-          <Stat label="Avg Loss" value={avgLoss > 0 ? fmtMoney(avgLoss) : "—"} color="text-red-400" />
-          <Stat label="Avg R-Multiple" value={t.some(tr => tr.r_multiple != null) ? `${avgRMultiple.toFixed(2)}R` : "—"} color={avgRMultiple >= 1 ? "text-green-400" : "text-amber-400"} />
+          <Stat label="Avg Win" value={avgWin > 0 ? fmtMoney(avgWin) : "—"} color="text-green-500" />
+          <Stat label="Avg Loss" value={avgLoss > 0 ? fmtMoney(avgLoss) : "—"} color="text-red-500" />
+          <Stat label="Avg R-Multiple" value={t.some(tr => tr.r_multiple != null) ? `${avgRMultiple.toFixed(2)}R` : "—"} color={avgRMultiple >= 1 ? "text-green-500" : "text-amber-500"} />
           <Stat label="Total Contracts" value={totalContracts.toLocaleString()} sub={`avg ${avgContracts.toFixed(1)} per trade`} />
-          <Stat label="Best Trade" value={bestTrade ? fmtMoney(bestTrade.pnl, true) : "—"} sub={bestTrade?.symbol} color="text-green-400" />
-          <Stat label="Worst Trade" value={worstTrade ? fmtMoney(worstTrade.pnl, true) : "—"} sub={worstTrade?.symbol} color="text-red-400" />
+          <Stat label="Best Trade" value={bestTrade ? fmtMoney(bestTrade.pnl, true) : "—"} sub={bestTrade?.symbol} color="text-green-500" />
+          <Stat label="Worst Trade" value={worstTrade ? fmtMoney(worstTrade.pnl, true) : "—"} sub={worstTrade?.symbol} color="text-red-500" />
         </StatGrid>
       </Section>
 
       {/* Timing */}
       <Section title="Timing & Patterns" icon={<Calendar className="h-4 w-4" />}>
         <StatGrid>
-          <Stat label="Best Day of Week" value={bestDay?.[0]?.slice(0, 3) ?? "—"} sub={bestDay ? fmtMoney(bestDay[1].pnl, true) + ` · ${bestDay[1].count} trades` : ""} color="text-green-400" />
-          <Stat label="Worst Day of Week" value={worstDay?.[0]?.slice(0, 3) ?? "—"} sub={worstDay ? fmtMoney(worstDay[1].pnl, true) + ` · ${worstDay[1].count} trades` : ""} color="text-red-400" />
-          <Stat label="Best Month" value={bestMonth ? new Date(bestMonth[0] + "-01").toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—"} sub={bestMonth ? fmtMoney(bestMonth[1], true) : ""} color="text-green-400" />
+          <Stat label="Best Day of Week" value={bestDay?.[0]?.slice(0, 3) ?? "—"} sub={bestDay ? fmtMoney(bestDay[1].pnl, true) + ` · ${bestDay[1].count} trades` : ""} color="text-green-500" />
+          <Stat label="Worst Day of Week" value={worstDay?.[0]?.slice(0, 3) ?? "—"} sub={worstDay ? fmtMoney(worstDay[1].pnl, true) + ` · ${worstDay[1].count} trades` : ""} color="text-red-500" />
+          <Stat label="Best Month" value={bestMonth ? new Date(bestMonth[0] + "-01").toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—"} sub={bestMonth ? fmtMoney(bestMonth[1], true) : ""} color="text-green-500" />
           <Stat label="Unique Trading Days" value={new Set(t.map(tr => tr.trade_date)).size.toString()} />
           <Stat label="Avg Trades/Day" value={new Set(t.map(tr => tr.trade_date)).size > 0 ? (t.length / new Set(t.map(tr => tr.trade_date)).size).toFixed(1) : "—"} />
           <Stat label="Total Trading Days" value={new Set(t.map(tr => tr.trade_date)).size.toString()} sub="unique dates" />
@@ -123,8 +123,8 @@ export default async function InsightsPage() {
       <Section title="Journal Stats" icon={<BookOpen className="h-4 w-4" />}>
         <StatGrid>
           <Stat label="Days Journaled" value={e.length.toString()} />
-          <Stat label="Rules Followed" value={e.length > 0 ? `${((rulesFollowedCount / e.length) * 100).toFixed(0)}%` : "—"} sub={`${rulesFollowedCount} of ${e.length} days`} color={rulesFollowedCount / (e.length || 1) >= 0.7 ? "text-green-400" : "text-amber-400"} />
-          <Stat label="Avg Session Rating" value={e.some(j => j.rating != null) ? `${avgRating.toFixed(1)} / 5` : "—"} color="text-amber-400" />
+          <Stat label="Rules Followed" value={e.length > 0 ? `${((rulesFollowedCount / e.length) * 100).toFixed(0)}%` : "—"} sub={`${rulesFollowedCount} of ${e.length} days`} color={rulesFollowedCount / (e.length || 1) >= 0.7 ? "text-green-500" : "text-amber-500"} />
+          <Stat label="Avg Session Rating" value={e.some(j => j.rating != null) ? `${avgRating.toFixed(1)} / 5` : "—"} color="text-amber-500" />
           <Stat label="Journal Rate" value={t.length > 0 && e.length > 0 ? `${Math.min(100, (e.length / new Set(t.map(tr => tr.trade_date)).size) * 100).toFixed(0)}%` : "—"} sub="vs trading days" />
         </StatGrid>
       </Section>
@@ -136,7 +136,7 @@ export default async function InsightsPage() {
             {topSymbols.map(([sym, pnl]) => (
               <div key={sym} className="flex items-center justify-between rounded-lg border p-3">
                 <span className="font-bold text-sm">{sym}</span>
-                <span className={`font-bold text-sm ${pnl >= 0 ? "text-green-400" : "text-red-400"}`}>{fmtMoney(pnl, true)}</span>
+                <span className={`font-bold text-sm ${pnl >= 0 ? "text-green-500" : "text-red-500"}`}>{fmtMoney(pnl, true)}</span>
               </div>
             ))}
           </div>
@@ -153,7 +153,7 @@ export default async function InsightsPage() {
                   <span className="font-bold text-sm">{setup}</span>
                   <span className="ml-2 text-xs text-muted-foreground">{count} trades</span>
                 </div>
-                <span className={`font-bold text-sm ${pnl >= 0 ? "text-green-400" : "text-red-400"}`}>{fmtMoney(pnl, true)}</span>
+                <span className={`font-bold text-sm ${pnl >= 0 ? "text-green-500" : "text-red-500"}`}>{fmtMoney(pnl, true)}</span>
               </div>
             ))}
           </div>
