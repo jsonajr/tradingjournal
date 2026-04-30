@@ -54,11 +54,12 @@ export default async function DashboardPage() {
   const series = sorted.map(tr => { cum += (tr.pnl - tr.commission); return { x: tr.trade_date, y: cum }; });
 
   // Format helpers for compact mobile display
-  function fmtCompact(n: number): string {
+  function fmtCompact(n: number, signed = false): string {
     const abs = Math.abs(n);
-    if (abs >= 100000) return `${n >= 0 ? "+" : "-"}$${(abs / 1000).toFixed(0)}k`;
-    if (abs >= 10000) return `${n >= 0 ? "+" : "-"}$${(abs / 1000).toFixed(1)}k`;
-    return `${n >= 0 ? "+" : ""}${fmtMoney(Math.abs(n))}`;
+    const sign = n < 0 ? "-" : signed ? "+" : "";
+    if (abs >= 100000) return `${sign}$${(abs / 1000).toFixed(0)}k`;
+    if (abs >= 10000) return `${sign}$${(abs / 1000).toFixed(1)}k`;
+    return `${sign}${fmtMoney(abs)}`;
   }
 
   return (
@@ -77,7 +78,7 @@ export default async function DashboardPage() {
         <Card><CardContent className="p-2.5 md:p-4">
           <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Net P&L</div>
           <div className={`text-sm sm:text-base md:text-2xl font-black leading-tight ${totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
-            {fmtCompact(totalPnl)}
+            {fmtCompact(totalPnl, true)}
           </div>
           <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">{t.length} trades</div>
         </CardContent></Card>
@@ -103,7 +104,7 @@ export default async function DashboardPage() {
           <div className="flex items-baseline gap-0.5 flex-wrap">
             <span className="text-xs sm:text-sm md:text-lg font-black text-green-400 leading-tight">{avgWin > 0 ? fmtCompact(avgWin) : "—"}</span>
             <span className="text-muted-foreground text-[9px]">/</span>
-            <span className="text-xs sm:text-sm md:text-lg font-black text-red-400 leading-tight">{avgLoss > 0 ? fmtCompact(avgLoss) : "—"}</span>
+            <span className="text-xs sm:text-sm md:text-lg font-black text-red-400 leading-tight">{avgLoss > 0 ? fmtCompact(-avgLoss, true) : "—"}</span>
           </div>
           <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">per trade</div>
         </CardContent></Card>
@@ -178,7 +179,7 @@ export default async function DashboardPage() {
                     <TableCell className="text-xs">{tr.trade_date}</TableCell>
                     <TableCell className="font-semibold">{tr.symbol}</TableCell>
                     <TableCell><Badge className={tr.direction === "Long" ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}>{tr.direction}</Badge></TableCell>
-                    <TableCell className={`font-bold text-base ${net >= 0 ? "text-green-400" : "text-red-400"}`}>{net >= 0 ? "+" : ""}{fmtMoney(Math.abs(net))}</TableCell>
+                    <TableCell className={`font-bold text-base ${net >= 0 ? "text-green-400" : "text-red-400"}`}>{fmtCompact(net, true)}</TableCell>
                     <TableCell className="text-xs">{tr.r_multiple != null ? `${tr.r_multiple}R` : "—"}</TableCell>
                   </TableRow>
                 );
