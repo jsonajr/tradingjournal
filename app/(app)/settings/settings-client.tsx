@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SessionsTab } from "./sessions-tab";
 
 import Link from "next/link";
