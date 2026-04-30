@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Settings, Shield, LogOut, TrendingUp, PlusCircle, Upload, DollarSign, CalendarDays, List } from "lucide-react";
+import { LayoutDashboard, Settings, Shield, LogOut, TrendingUp, PlusCircle, Upload, DollarSign, CalendarDays, List, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -13,15 +13,15 @@ const NAV = [
   { href: "/trades/new", label: "New Trade",               icon: PlusCircle },
   { href: "/import",     label: "Import CSV",              icon: Upload },
   { href: "/eval",       label: "Eval Expenses & Payouts", icon: DollarSign },
-  { href: "/journal",    label: "Playbook Journal",        icon: CalendarDays },
+  { href: "/journal/calendar", label: "Playbook Calendar", icon: CalendarDays },
+  { href: "/strategies", label: "Strategies",              icon: BookOpen },
   { href: "/settings",   label: "Settings",                icon: Settings },
 ];
 
 const ADMIN_NAV = [
-  { href: "/admin",           label: "Admin Home", icon: Shield },
-  { href: "/admin/users",     label: "Users",      icon: Shield },
-  { href: "/admin/trades",    label: "All Trades", icon: TrendingUp },
-  { href: "/admin/cooldowns", label: "Cooldowns",  icon: Shield },
+  { href: "/admin",        label: "Admin Home", icon: Shield },
+  { href: "/admin/users",  label: "Users",      icon: Shield },
+  { href: "/admin/trades", label: "All Trades", icon: TrendingUp },
 ];
 
 export function AppSidebar({ profile }: { profile: Profile }) {
@@ -56,8 +56,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}>
-              <Icon className="h-4 w-4" />
-              {item.label}
+              <Icon className="h-4 w-4" />{item.label}
             </Link>
           );
         })}
@@ -72,8 +71,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   active ? "bg-destructive/15 text-destructive" : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}>
-                  <Icon className="h-4 w-4" />
-                  {item.label}
+                  <Icon className="h-4 w-4" />{item.label}
                 </Link>
               );
             })}

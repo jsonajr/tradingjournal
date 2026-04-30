@@ -8,24 +8,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, List, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, List, Trash2, Flame, BookOpen, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type Entry = {
-  id: string;
-  entry_date: string;
-  title: string | null;
+  id: string; entry_date: string; title: string | null;
   bias: "Bullish" | "Bearish" | "Neutral" | null;
   mood: "great" | "good" | "neutral" | "bad" | "terrible" | null;
-  rating: number | null;
-  plan: string | null;
-  notes: string | null;
-  setups: string[] | null;
-  sessions: string[] | null;
-  rules_followed: boolean | null;
-  improvement: string | null;
-  tags: string[] | null;
+  rating: number | null; plan: string | null; notes: string | null;
+  setups: string[] | null; sessions: string[] | null;
+  rules_followed: boolean | null; improvement: string | null; tags: string[] | null;
 };
 type TradeMini = { trade_date: string; pnl: number; commission: number };
 
@@ -33,9 +26,25 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const BIASES: ("Bullish" | "Bearish" | "Neutral")[] = ["Bullish","Bearish","Neutral"];
 const MOODS: ("great" | "good" | "neutral" | "bad" | "terrible")[] = ["great","good","neutral","bad","terrible"];
-const MOOD_LABELS = { great: "Great", good: "Good", neutral: "Neutral", bad: "Bad", terrible: "Terrible" };
+const MOOD_LABELS = { great:"Great", good:"Good", neutral:"Neutral", bad:"Bad", terrible:"Terrible" };
 const SETUP_TAGS = ["Trend Follow","VWAP Reclaim","Opening Range","Supply/Demand","Breakout","Mean Reversion","Liquidity Sweep","Fair Value Gap","News Play","Scalp"];
 const SESSION_TAGS = ["London","NY Open","NY AM","NY PM","Asia"];
+
+function calcStreak(entries: Entry[]): number {
+  const dates = new Set(entries.map((e) => e.entry_date));
+  let streak = 0;
+  const d = new Date();
+  // Check if today or yesterday has an entry (don't break streak for today not yet done)
+  const todayStr = d.toISOString().split("T")[0];
+  d.setDate(d.getDate() - (dates.has(todayStr) ? 0 : 1));
+  while (true) {
+    const s = d.toISOString().split("T")[0];
+    if (!dates.has(s)) break;
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
 
 export function CalendarClient({ initialEntries, trades }: { initialEntries: Entry[]; trades: TradeMini[] }) {
   const router = useRouter();
@@ -46,101 +55,100 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
   const [editing, setEditing] = useState<Entry | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
 
-  const entryByDate = useMemo(() => {
-    const m: Record<string, Entry> = {};
-    entries.forEach((e) => { m[e.entry_date] = e; });
-    return m;
-  }, [entries]);
+  const entryByDate = useMemo(() => { const m: Record<string, Entry> = {}; entries.forEach((e) => { m[e.entry_date] = e; }); return m; }, [entries]);
+  const pnlByDate = useMemo(() => { const m: Record<string, number> = {}; trades.forEach((t) => { m[t.trade_date] = (m[t.trade_date] ?? 0) + (t.pnl - t.commission); }); return m; }, [trades]);
+  const sortedList = useMemo(() => [...entries].sort((a, b) => b.entry_date.localeCompare(a.entry_date)), [entries]);
 
-  const pnlByDate = useMemo(() => {
-    const m: Record<string, number> = {};
-    trades.forEach((t) => { m[t.trade_date] = (m[t.trade_date] ?? 0) + (t.pnl - t.commission); });
-    return m;
-  }, [trades]);
+  const streak = useMemo(() => calcStreak(entries), [entries]);
+  const daysJournaled = entries.length;
+  const thisMonthEntries = entries.filter((e) => e.entry_date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)).length;
 
-  function nav(dir: number) {
-    let m = month + dir, y = year;
-    if (m > 11) { m = 0; y++; }
-    if (m < 0) { m = 11; y--; }
-    setMonth(m); setYear(y);
-  }
-  function goToday() { setYear(new Date().getFullYear()); setMonth(new Date().getMonth()); }
-
-  function openEntry(date: string) {
-    const existing = entryByDate[date];
-    setEditing(existing ?? { id: "", entry_date: date, title: null, bias: null, mood: null, rating: null, plan: null, notes: null, setups: [], sessions: [], rules_followed: null, improvement: null, tags: [] } as Entry);
-    setEditorOpen(true);
-  }
-
-  async function saveEntry() {
-    if (!editing) return;
-    const res = await fetch("/api/journal-entries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editing),
-    });
-    const data = await res.json();
-    if (!res.ok) { toast.error(data.error ?? "Failed to save"); return; }
-    setEntries([data.entry, ...entries.filter((e) => e.id !== data.entry.id && e.entry_date !== data.entry.entry_date)]);
-    setEditorOpen(false);
-    toast.success("Journal entry saved!");
-    router.refresh();
-  }
-
-  async function deleteEntry() {
-    if (!editing?.id) return;
-    if (!confirm("Delete this journal entry?")) return;
-    const res = await fetch("/api/journal-entries", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: editing.id }),
-    });
-    if (!res.ok) { toast.error("Failed to delete"); return; }
-    setEntries(entries.filter((e) => e.id !== editing.id));
-    setEditorOpen(false);
-    toast.success("Entry deleted");
-    router.refresh();
-  }
-
-  // Calendar grid generation
+  const today = new Date().toISOString().split("T")[0];
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevDays = new Date(year, month, 0).getDate();
-  const today = new Date().toISOString().split("T")[0];
   const cells: { day: number; cur: boolean }[] = [];
   for (let i = 0; i < firstDay; i++) cells.push({ day: prevDays - firstDay + i + 1, cur: false });
   for (let i = 1; i <= daysInMonth; i++) cells.push({ day: i, cur: true });
   while (cells.length % 7 !== 0) cells.push({ day: cells.length - firstDay - daysInMonth + 1, cur: false });
 
-  const sortedList = [...entries].sort((a, b) => b.entry_date.localeCompare(a.entry_date));
+  function openEntry(dateStr: string) {
+    const existing = entryByDate[dateStr];
+    setEditing(existing ?? { id: "", entry_date: dateStr, title: null, bias: null, mood: null, rating: null, plan: null, notes: null, setups: [], sessions: [], rules_followed: null, improvement: null, tags: [] });
+    setEditorOpen(true);
+  }
+
+  async function saveEntry() {
+    if (!editing) return;
+    const isNew = !editing.id;
+    const res = await fetch("/api/journal-entries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...editing, entry_date: editing.entry_date }),
+    });
+    const data = await res.json();
+    if (!res.ok) { toast.error(data.error ?? "Failed"); return; }
+    if (isNew) setEntries([data.entry, ...entries]);
+    else setEntries(entries.map((e) => e.entry_date === editing.entry_date ? data.entry : e));
+    setEditorOpen(false);
+    toast.success("Entry saved!");
+    router.refresh();
+  }
+
+  async function deleteEntry() {
+    if (!editing?.id || !confirm("Delete this entry?")) return;
+    const res = await fetch("/api/journal-entries", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editing.id }) });
+    if (!res.ok) { toast.error("Failed"); return; }
+    setEntries(entries.filter((e) => e.id !== editing.id));
+    setEditorOpen(false);
+    toast.success("Entry deleted");
+  }
 
   return (
     <div className="p-4 md:p-8">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold md:text-3xl">Playbook Journal</h1>
-          <p className="text-sm text-muted-foreground">Daily reflections and trading log</p>
+          <h1 className="text-2xl font-bold md:text-3xl">Playbook Calendar</h1>
+          <p className="text-sm text-muted-foreground">Daily journal and planning</p>
         </div>
         <div className="flex gap-2">
-          <Button variant={view === "cal" ? "default" : "outline"} size="sm" onClick={() => setView("cal")}><CalendarIcon className="mr-1 h-4 w-4" />Calendar</Button>
-          <Button variant={view === "list" ? "default" : "outline"} size="sm" onClick={() => setView("list")}><List className="mr-1 h-4 w-4" />List</Button>
-          <Button size="sm" onClick={() => openEntry(today)}><Plus className="mr-1 h-4 w-4" />New Entry</Button>
+          <Button size="sm" variant={view === "cal" ? "default" : "outline"} onClick={() => setView("cal")}><CalendarDays className="mr-1 h-3.5 w-3.5" />Calendar</Button>
+          <Button size="sm" variant={view === "list" ? "default" : "outline"} onClick={() => setView("list")}><List className="mr-1 h-3.5 w-3.5" />List</Button>
+          <Button size="sm" onClick={() => openEntry(today)}><Plus className="mr-1 h-3.5 w-3.5" />New Entry</Button>
         </div>
+      </div>
+
+      {/* Stats */}
+      <div className="mb-6 grid grid-cols-3 gap-3">
+        <Card><CardContent className="p-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15"><Flame className="h-5 w-5 text-amber-500" /></div>
+          <div><div className="text-xs text-muted-foreground">Current Streak</div><div className="text-2xl font-black text-amber-500">{streak} <span className="text-sm font-normal">days</span></div></div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15"><BookOpen className="h-5 w-5 text-primary" /></div>
+          <div><div className="text-xs text-muted-foreground">Total Journaled</div><div className="text-2xl font-black text-primary">{daysJournaled} <span className="text-sm font-normal">days</span></div></div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/15"><CalendarDays className="h-5 w-5 text-blue-500" /></div>
+          <div><div className="text-xs text-muted-foreground">This Month</div><div className="text-2xl font-black text-blue-500">{thisMonthEntries} <span className="text-sm font-normal">entries</span></div></div>
+        </CardContent></Card>
       </div>
 
       {view === "cal" && (
         <Card>
-          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-lg">{MONTHS[month]} {year}</CardTitle>
-            <div className="flex gap-1">
-              <Button size="sm" variant="outline" onClick={() => nav(-1)}><ChevronLeft className="h-4 w-4" />Prev</Button>
-              <Button size="sm" variant="outline" onClick={goToday}>Today</Button>
-              <Button size="sm" variant="outline" onClick={() => nav(1)}>Next<ChevronRight className="h-4 w-4" /></Button>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm">{MONTHS[month]} {year}</CardTitle>
+              <div className="flex gap-1">
+                <Button size="icon" variant="ghost" onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); }}><ChevronLeft className="h-4 w-4" /></Button>
+                <Button size="sm" variant="ghost" onClick={() => { setYear(new Date().getFullYear()); setMonth(new Date().getMonth()); }}>Today</Button>
+                <Button size="icon" variant="ghost" onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); }}><ChevronRight className="h-4 w-4" /></Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {DOW.map((d) => <div key={d} className="py-1 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{d}</div>)}
+            <div className="mb-1 grid grid-cols-7 gap-1">
+              {DOW.map((d) => <div key={d} className="py-1 text-center text-[10px] font-semibold uppercase text-muted-foreground">{d}</div>)}
             </div>
             <div className="grid grid-cols-7 gap-1">
               {cells.map((c, i) => {
@@ -150,20 +158,13 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                 const isToday = dateStr === today;
                 const moodColor = e?.mood === "great" ? "bg-green-500/15 text-green-600" : e?.mood === "good" ? "bg-blue-500/15 text-blue-500" : e?.mood === "bad" || e?.mood === "terrible" ? "bg-red-500/15 text-red-500" : "bg-amber-500/15 text-amber-600";
                 return (
-                  <button
-                    key={i}
-                    onClick={() => c.cur && openEntry(dateStr)}
-                    disabled={!c.cur}
-                    className={cn(
-                      "flex min-h-[60px] flex-col rounded-md border p-1.5 text-left transition-colors md:min-h-[90px] md:p-2",
+                  <button key={i} onClick={() => c.cur && openEntry(dateStr)} disabled={!c.cur}
+                    className={cn("flex min-h-[55px] flex-col rounded-md border p-1 text-left transition-colors md:min-h-[70px]",
                       c.cur ? "hover:border-primary hover:bg-primary/5 cursor-pointer" : "opacity-30 cursor-default",
-                      isToday && "border-primary bg-primary/5",
-                      e && "border-primary/40",
-                    )}
-                  >
-                    <div className={cn("text-[11px] font-semibold mb-1", isToday && "text-primary")}>{c.day}</div>
-                    {e && <div className={cn("rounded px-1 py-0.5 text-[9px] font-semibold mb-0.5 truncate", moodColor)}>{e.bias ? `${e.bias} · ` : ""}{e.title || "Entry"}</div>}
-                    {pnl != null && <div className={cn("mt-auto text-[10px] font-bold", pnl >= 0 ? "text-green-500" : "text-red-500")}>{pnl >= 0 ? "+" : ""}${pnl.toFixed(0)}</div>}
+                      isToday && "border-primary bg-primary/5", e && "border-primary/40")}>
+                    <div className={cn("text-[10px] font-semibold mb-0.5", isToday && "text-primary")}>{c.day}</div>
+                    {e && <div className={cn("rounded px-1 py-0.5 text-[8px] font-semibold mb-0.5 truncate", moodColor)}>{e.bias ? `${e.bias.slice(0,1)} · ` : ""}{e.title?.slice(0, 12) || "Entry"}</div>}
+                    {pnl != null && dateStr && <div className={cn("mt-auto text-[9px] font-bold", pnl >= 0 ? "text-green-500" : "text-red-500")}>{pnl >= 0 ? "+" : ""}${Math.abs(pnl).toFixed(0)}</div>}
                   </button>
                 );
               })}
@@ -176,12 +177,10 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
         <Card>
           <CardHeader><CardTitle className="text-sm">All Entries</CardTitle></CardHeader>
           <CardContent>
-            {sortedList.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">No journal entries yet — click "New Entry" to start</div>
-            ) : (
-              <div className="space-y-2">
-                {sortedList.map((e) => {
-                  const moodIcon = e.mood === "great" ? "🟢" : e.mood === "good" ? "🔵" : e.mood === "bad" ? "🟠" : e.mood === "terrible" ? "🔴" : e.mood === "neutral" ? "🟡" : "⚪";
+            {sortedList.length === 0
+              ? <div className="py-8 text-center text-sm text-muted-foreground">No journal entries yet — click &ldquo;New Entry&rdquo; to start</div>
+              : <div className="space-y-2">{sortedList.map((e) => {
+                  const moodIcon = e.mood === "great" ? "🟢" : e.mood === "good" ? "🔵" : e.mood === "bad" ? "🟠" : e.mood === "terrible" ? "🔴" : "🟡";
                   return (
                     <button key={e.id} onClick={() => openEntry(e.entry_date)} className="w-full rounded-md border p-3 text-left hover:border-primary hover:bg-primary/5">
                       <div className="flex items-center justify-between">
@@ -195,9 +194,8 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                       {(e.notes || e.plan) && <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">{e.notes || e.plan}</div>}
                     </button>
                   );
-                })}
-              </div>
-            )}
+                })}</div>
+            }
           </CardContent>
         </Card>
       )}
@@ -211,24 +209,14 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                 <Label className="text-xs uppercase tracking-wide">Title</Label>
                 <Input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} placeholder="e.g. Strong NFP reaction — caught the move" />
               </div>
-
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs uppercase tracking-wide">Bias</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {BIASES.map((b) => (
-                      <button
-                        key={b}
-                        onClick={() => setEditing({ ...editing, bias: editing.bias === b ? null : b })}
-                        className={cn(
-                          "rounded-md border px-2.5 py-1 text-xs font-medium",
-                          editing.bias === b
-                            ? b === "Bullish" ? "border-green-500 bg-green-500/15 text-green-500"
-                            : b === "Bearish" ? "border-red-500 bg-red-500/15 text-red-500"
-                            : "border-amber-500 bg-amber-500/15 text-amber-500"
-                            : "border-input text-muted-foreground hover:border-primary hover:text-primary",
-                        )}
-                      >
+                      <button key={b} onClick={() => setEditing({ ...editing, bias: editing.bias === b ? null : b })}
+                        className={cn("rounded-md border px-2.5 py-1 text-xs font-medium",
+                          editing.bias === b ? b === "Bullish" ? "border-green-500 bg-green-500/15 text-green-500" : b === "Bearish" ? "border-red-500 bg-red-500/15 text-red-500" : "border-amber-500 bg-amber-500/15 text-amber-500" : "border-input text-muted-foreground hover:border-primary hover:text-primary")}>
                         {b}
                       </button>
                     ))}
@@ -238,14 +226,8 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                   <Label className="text-xs uppercase tracking-wide">Mood</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {MOODS.map((m) => (
-                      <button
-                        key={m}
-                        onClick={() => setEditing({ ...editing, mood: editing.mood === m ? null : m })}
-                        className={cn(
-                          "rounded-md border px-2.5 py-1 text-xs font-medium",
-                          editing.mood === m ? "border-primary bg-primary/15 text-primary" : "border-input text-muted-foreground hover:border-primary",
-                        )}
-                      >
+                      <button key={m} onClick={() => setEditing({ ...editing, mood: editing.mood === m ? null : m })}
+                        className={cn("rounded-md border px-2.5 py-1 text-xs font-medium", editing.mood === m ? "border-primary bg-primary/15 text-primary" : "border-input text-muted-foreground hover:border-primary")}>
                         {MOOD_LABELS[m]}
                       </button>
                     ))}
@@ -254,7 +236,7 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                 <div className="space-y-1.5">
                   <Label className="text-xs uppercase tracking-wide">Rating</Label>
                   <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((n) => (
+                    {[1,2,3,4,5].map((n) => (
                       <button key={n} onClick={() => setEditing({ ...editing, rating: editing.rating === n ? null : n })} className="text-2xl leading-none">
                         <span className={n <= (editing.rating ?? 0) ? "text-amber-500" : "text-muted"}>★</span>
                       </button>
@@ -262,10 +244,8 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                   </div>
                 </div>
               </div>
-
               <TagSection label="Setups Traded" tags={SETUP_TAGS} value={editing.setups ?? []} onChange={(v) => setEditing({ ...editing, setups: v })} />
               <TagSection label="Sessions Traded" tags={SESSION_TAGS} value={editing.sessions ?? []} onChange={(v) => setEditing({ ...editing, sessions: v })} />
-
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs uppercase tracking-wide">Pre-Market Plan</Label>
@@ -276,25 +256,14 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                   <Textarea value={editing.notes ?? ""} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} placeholder="What happened, mistakes, what you did well..." rows={4} />
                 </div>
               </div>
-
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs uppercase tracking-wide">Rules Followed?</Label>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => setEditing({ ...editing, rules_followed: editing.rules_followed === true ? null : true })}
-                      className={cn(
-                        "flex-1 rounded-md border px-3 py-2 text-sm font-medium",
-                        editing.rules_followed === true ? "border-green-500 bg-green-500/15 text-green-500" : "border-input text-muted-foreground hover:border-primary",
-                      )}
-                    >Yes ✓</button>
-                    <button
-                      onClick={() => setEditing({ ...editing, rules_followed: editing.rules_followed === false ? null : false })}
-                      className={cn(
-                        "flex-1 rounded-md border px-3 py-2 text-sm font-medium",
-                        editing.rules_followed === false ? "border-red-500 bg-red-500/15 text-red-500" : "border-input text-muted-foreground hover:border-primary",
-                      )}
-                    >No ✗</button>
+                    <button onClick={() => setEditing({ ...editing, rules_followed: editing.rules_followed === true ? null : true })}
+                      className={cn("flex-1 rounded-md border px-3 py-2 text-sm font-medium", editing.rules_followed === true ? "border-green-500 bg-green-500/15 text-green-500" : "border-input text-muted-foreground hover:border-primary")}>Yes ✓</button>
+                    <button onClick={() => setEditing({ ...editing, rules_followed: editing.rules_followed === false ? null : false })}
+                      className={cn("flex-1 rounded-md border px-3 py-2 text-sm font-medium", editing.rules_followed === false ? "border-red-500 bg-red-500/15 text-red-500" : "border-input text-muted-foreground hover:border-primary")}>No ✗</button>
                   </div>
                 </div>
                 <div className="space-y-1.5">
@@ -325,14 +294,8 @@ function TagSection({ label, tags, value, onChange }: { label: string; tags: str
         {tags.map((t) => {
           const on = value.includes(t);
           return (
-            <button
-              key={t}
-              onClick={() => onChange(on ? value.filter((x) => x !== t) : [...value, t])}
-              className={cn(
-                "rounded-md border px-2.5 py-1 text-xs font-medium",
-                on ? "border-primary bg-primary/15 text-primary" : "border-input text-muted-foreground hover:border-primary",
-              )}
-            >
+            <button key={t} onClick={() => onChange(on ? value.filter((x) => x !== t) : [...value, t])}
+              className={cn("rounded-md border px-2.5 py-1 text-xs font-medium", on ? "border-primary bg-primary/15 text-primary" : "border-input text-muted-foreground hover:border-primary")}>
               {t}
             </button>
           );

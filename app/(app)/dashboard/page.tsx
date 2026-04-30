@@ -8,7 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { fmtMoney } from "@/lib/utils";
 import { TrendingUp, BookOpen } from "lucide-react";
 import { EquityChart } from "@/components/journal/equity-chart";
-import { QuickTradeButtons } from "@/components/journal/quick-trade-buttons";
+import nextDynamic from "next/dynamic";
+
+const QuickTradeButtons = nextDynamic(
+  () => import("@/components/journal/quick-trade-buttons").then((m) => m.QuickTradeButtons),
+  { ssr: false }
+);
+
 
 export const dynamic = "force-dynamic";
 
@@ -26,11 +32,11 @@ export default async function DashboardPage() {
   const losses = (trades ?? []).filter((t) => t.pnl < 0).length;
   const totalPnl = (trades ?? []).reduce((s, t) => s + t.pnl - t.commission, 0);
   const winRate = trades?.length ? (wins / trades.length) * 100 : 0;
-  const grossP = (trades ?? []).filter(t=>t.pnl>0).reduce((s,t)=>s+t.pnl,0);
-  const grossL = Math.abs((trades ?? []).filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
+  const grossP = (trades ?? []).filter(t => t.pnl > 0).reduce((s, t) => s + t.pnl, 0);
+  const grossL = Math.abs((trades ?? []).filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
   const pf = grossL > 0 ? grossP / grossL : grossP > 0 ? 999 : 0;
 
-  const sorted = [...(trades ?? [])].sort((a,b)=> new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime());
+  const sorted = [...(trades ?? [])].sort((a, b) => new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime());
   let cum = 0;
   const series = sorted.map(t => { cum += (t.pnl - t.commission); return { x: t.trade_date, y: cum }; });
 
@@ -44,52 +50,40 @@ export default async function DashboardPage() {
         <QuickTradeButtons accounts={accounts ?? []} userId={user.id} />
       </div>
 
-      {/* Stats */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Net P&L</div>
-            <div className={`text-2xl font-black md:text-3xl ${totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
-              {totalPnl >= 0 ? "+" : ""}{fmtMoney(Math.abs(totalPnl))}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">{trades?.length ?? 0} trades</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Win Rate</div>
-            <div className="text-2xl font-black md:text-3xl text-blue-400">{winRate.toFixed(1)}%</div>
-            <div className="text-xs text-muted-foreground mt-1">{wins}W / {losses}L</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Profit Factor</div>
-            <div className={`text-2xl font-black md:text-3xl ${pf >= 1.5 ? "text-green-400" : pf >= 1 ? "text-amber-400" : "text-red-400"}`}>
-              {pf === 999 ? "∞" : pf.toFixed(2)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Plan</div>
-            <div className="text-2xl font-black md:text-3xl text-primary">{profile.plan.toUpperCase()}</div>
-            <div className="text-xs text-muted-foreground mt-1 capitalize">{profile.role}</div>
-          </CardContent>
-        </Card>
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Card><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Net P&L</div>
+          <div className={`text-2xl font-black md:text-3xl ${totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
+            {totalPnl >= 0 ? "+" : ""}{fmtMoney(Math.abs(totalPnl))}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">{trades?.length ?? 0} trades</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Win Rate</div>
+          <div className="text-2xl font-black md:text-3xl text-blue-400">{winRate.toFixed(1)}%</div>
+          <div className="text-xs text-muted-foreground mt-1">{wins}W / {losses}L</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Profit Factor</div>
+          <div className={`text-2xl font-black md:text-3xl ${pf >= 1.5 ? "text-green-400" : pf >= 1 ? "text-amber-400" : "text-red-400"}`}>
+            {pf === 999 ? "∞" : pf.toFixed(2)}
+          </div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Plan</div>
+          <div className="text-2xl font-black md:text-3xl text-primary">{profile.plan.toUpperCase()}</div>
+          <div className="text-xs text-muted-foreground mt-1 capitalize">{profile.role}</div>
+        </CardContent></Card>
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader><CardTitle className="text-sm">Equity Curve</CardTitle></CardHeader>
           <CardContent>
-            {series.length > 0 ? (
-              <div className="h-[260px]"><EquityChart series={series} /></div>
-            ) : (
-              <div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
-                Log your first trade to see your equity curve
-              </div>
-            )}
+            {series.length > 0
+              ? <div className="h-[260px]"><EquityChart series={series} /></div>
+              : <div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">Log your first trade to see your equity curve</div>
+            }
           </CardContent>
         </Card>
         <Card>
@@ -98,11 +92,9 @@ export default async function DashboardPage() {
             <Button size="sm" variant="ghost" asChild><Link href="/journal/calendar"><BookOpen className="mr-1 h-3.5 w-3.5" />Open</Link></Button>
           </CardHeader>
           <CardContent>
-            {(recentJournal ?? []).length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">No journal entries yet</div>
-            ) : (
-              <div className="space-y-3">
-                {(recentJournal ?? []).map((j) => (
+            {(recentJournal ?? []).length === 0
+              ? <div className="py-8 text-center text-sm text-muted-foreground">No journal entries yet</div>
+              : <div className="space-y-3">{(recentJournal ?? []).map((j) => (
                   <Link key={j.id} href="/journal/calendar" className="block rounded-md border p-3 hover:border-primary">
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-muted-foreground">{j.entry_date}</div>
@@ -111,9 +103,8 @@ export default async function DashboardPage() {
                     {j.title && <div className="mt-1 text-sm font-medium">{j.title}</div>}
                     {j.notes && <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{j.notes}</div>}
                   </Link>
-                ))}
-              </div>
-            )}
+                ))}</div>
+            }
           </CardContent>
         </Card>
       </div>
@@ -130,15 +121,11 @@ export default async function DashboardPage() {
               {(trades ?? []).slice(0, 10).map((t) => {
                 const net = t.pnl - t.commission;
                 return (
-                  <TableRow key={t.id} className="cursor-pointer hover:bg-accent/50" onClick={() => {}}>
+                  <TableRow key={t.id}>
                     <TableCell className="text-xs">{t.trade_date}</TableCell>
                     <TableCell className="font-semibold">{t.symbol}</TableCell>
-                    <TableCell>
-                      <Badge className={t.direction === "Long" ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}>{t.direction}</Badge>
-                    </TableCell>
-                    <TableCell className={`font-bold text-base ${net >= 0 ? "text-green-400" : "text-red-400"}`}>
-                      {net >= 0 ? "+" : ""}{fmtMoney(Math.abs(net))}
-                    </TableCell>
+                    <TableCell><Badge className={t.direction === "Long" ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}>{t.direction}</Badge></TableCell>
+                    <TableCell className={`font-bold text-base ${net >= 0 ? "text-green-400" : "text-red-400"}`}>{net >= 0 ? "+" : ""}{fmtMoney(Math.abs(net))}</TableCell>
                     <TableCell className="text-xs">{t.r_multiple != null ? `${t.r_multiple}R` : "—"}</TableCell>
                   </TableRow>
                 );

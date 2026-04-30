@@ -83,23 +83,34 @@ export function QuickTradeButtons({ accounts, userId }: QuickTradeButtonsProps) 
 
   return (
     <>
-      <div className="flex gap-2">
-        <Button
+      {/* Desktop: inline buttons in header */}
+      <div className="hidden md:flex gap-2">
+        <Button onClick={() => openFor("Long")} className="bg-green-600 hover:bg-green-500 text-white font-bold" size="sm">
+          <TrendingUp className="mr-1.5 h-4 w-4" />Log Win
+        </Button>
+        <Button onClick={() => openFor("Short")} className="bg-red-600 hover:bg-red-500 text-white font-bold" size="sm">
+          <TrendingDown className="mr-1.5 h-4 w-4" />Log Loss
+        </Button>
+      </div>
+
+      {/* Mobile: floating squares above bottom tab bar */}
+      <div
+        className="fixed bottom-[calc(env(safe-area-inset-bottom)+60px)] right-3 z-50 flex flex-col gap-2 md:hidden"
+      >
+        <button
           onClick={() => openFor("Long")}
-          className="bg-green-600 hover:bg-green-500 text-white font-bold px-4 py-2 md:px-6"
-          size="sm"
+          className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-green-600 text-white shadow-lg shadow-green-900/40 active:scale-95 transition-transform"
         >
-          <TrendingUp className="mr-1.5 h-4 w-4" />
-          Log Win
-        </Button>
-        <Button
+          <span className="text-xl leading-none">📈</span>
+          <span className="text-[9px] font-bold mt-0.5">WIN</span>
+        </button>
+        <button
           onClick={() => openFor("Short")}
-          className="bg-red-600 hover:bg-red-500 text-white font-bold px-4 py-2 md:px-6"
-          size="sm"
+          className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-red-600 text-white shadow-lg shadow-red-900/40 active:scale-95 transition-transform"
         >
-          <TrendingDown className="mr-1.5 h-4 w-4" />
-          Log Loss
-        </Button>
+          <span className="text-xl leading-none">📉</span>
+          <span className="text-[9px] font-bold mt-0.5">LOSS</span>
+        </button>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
