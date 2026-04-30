@@ -8,12 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { fmtMoney } from "@/lib/utils";
 import { TrendingUp, BookOpen } from "lucide-react";
 import { EquityChart } from "@/components/journal/equity-chart";
-import nextDynamic from "next/dynamic";
-
-const QuickTradeButtons = nextDynamic(
-  () => import("@/components/journal/quick-trade-buttons").then((m) => m.QuickTradeButtons),
-  { ssr: false }
-);
+import { QuickTradeWrapper } from "@/components/journal/quick-trade-wrapper";
 
 
 export const dynamic = "force-dynamic";
@@ -47,7 +42,7 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold md:text-3xl">Welcome back{profile.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}</h1>
           <p className="text-sm text-muted-foreground">Your trading overview</p>
         </div>
-        <QuickTradeButtons accounts={accounts ?? []} userId={user.id} />
+        <QuickTradeWrapper accounts={accounts ?? []} userId={user.id} />
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
