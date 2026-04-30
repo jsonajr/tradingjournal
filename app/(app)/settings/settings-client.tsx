@@ -35,6 +35,23 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
   const [fullName, setFullName] = useState(profile.full_name ?? "");
   const [savingProfile, setSavingProfile] = useState(false);
 
+  // Password change state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  async function changePassword() {
+    if (!newPassword || newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (newPassword !== confirmPassword) { toast.error("Passwords do not match"); return; }
+    setChangingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setChangingPassword(false);
+    if (error) { toast.error(error.message); return; }
+    setNewPassword("");
+    setConfirmPassword("");
+    toast.success("Password updated successfully");
+  }
+
   // Settings state
   const [tz, setTz] = useState(settings?.timezone ?? "America/New_York");
   const [currency, setCurrency] = useState(settings?.default_currency ?? "USD");
@@ -149,6 +166,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
       </div>
 
       {tab === "profile" && (
+        <div className="space-y-4">
         <Card>
           <CardHeader><CardTitle className="text-sm">Personal Info</CardTitle><CardDescription>Shown in dashboard and reports</CardDescription></CardHeader>
           <CardContent className="space-y-4">
@@ -161,6 +179,45 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
             <Button onClick={saveProfile} disabled={savingProfile}>{savingProfile ? "Saving..." : "Save Profile"}</Button>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Change Password</CardTitle><CardDescription>Update your account password</CardDescription></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>New Password</Label>
+                <Input
+                  type="password"
+                  placeholder="Min. 8 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Confirm Password</Label>
+                <Input
+                  type="password"
+                  placeholder="Repeat new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            </div>
+            {newPassword && confirmPassword && newPassword !== confirmPassword && (
+              <p className="text-xs text-destructive">Passwords do not match</p>
+            )}
+            {newPassword && newPassword.length < 8 && (
+              <p className="text-xs text-destructive">Password must be at least 8 characters</p>
+            )}
+            <Button
+              onClick={changePassword}
+              disabled={changingPassword || !newPassword || !confirmPassword}
+            >
+              {changingPassword ? "Updating…" : "Update Password"}
+            </Button>
+          </CardContent>
+        </Card>
+        </div>
       )}
 
       {tab === "accounts" && (
