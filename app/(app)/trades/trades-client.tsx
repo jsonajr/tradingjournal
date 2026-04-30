@@ -15,8 +15,7 @@ import { fmtMoney } from "@/lib/utils";
 import { Plus, Upload, Trash2, CheckSquare, Square, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
-const SYMBOLS = ["ES","NQ","MES","MNQ","CL","GC","RTY","YM","Other"];
-const SETUPS = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other"];
+const SETUPS  = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other"];
 const SESSIONS = ["London","NY Open","NY AM","NY PM","Asia"];
 const GRADES = ["A+","A","B","C","D"];
 
@@ -94,10 +93,10 @@ function EditTradeModal({
             <Input type="date" value={form.trade_date} onChange={(e) => set("trade_date", e.target.value)} />
           </Field>
           <Field label="Account">
-            <Select value={form.account_id} onValueChange={(v) => set("account_id", v)}>
+            <Select value={form.account_id || "__none__"} onValueChange={(v) => set("account_id", v === "__none__" ? "" : v)}>
               <SelectTrigger><SelectValue placeholder="No account" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No account</SelectItem>
+                <SelectItem value="__none__">No account</SelectItem>
                 {accounts.map((a) => (
                   <SelectItem key={a.id} value={a.id}>{a.name}{a.firm ? ` (${a.firm})` : ""}</SelectItem>
                 ))}
@@ -105,10 +104,7 @@ function EditTradeModal({
             </Select>
           </Field>
           <Field label="Symbol">
-            <Select value={SYMBOLS.includes(form.symbol) ? form.symbol : "Other"} onValueChange={(v) => set("symbol", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{SYMBOLS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
+            <Input value={form.symbol} onChange={(e) => set("symbol", e.target.value.toUpperCase())} placeholder="ES, NQ, CL..." />
           </Field>
           <Field label="Direction">
             <Select value={form.direction} onValueChange={(v) => set("direction", v)}>
@@ -138,21 +134,30 @@ function EditTradeModal({
             <Input type="number" step="0.01" value={form.commission} onChange={(e) => set("commission", e.target.value)} />
           </Field>
           <Field label="Setup">
-            <Select value={SETUPS.includes(form.setup) ? form.setup : "Other"} onValueChange={(v) => set("setup", v)}>
+            <Select value={form.setup || "__none__"} onValueChange={(v) => set("setup", v === "__none__" ? "" : v)}>
               <SelectTrigger><SelectValue placeholder="Select setup" /></SelectTrigger>
-              <SelectContent>{SETUPS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                <SelectItem value="__none__">None</SelectItem>
+                {SETUPS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
             </Select>
           </Field>
           <Field label="Session">
-            <Select value={form.session} onValueChange={(v) => set("session", v)}>
+            <Select value={form.session || "__none__"} onValueChange={(v) => set("session", v === "__none__" ? "" : v)}>
               <SelectTrigger><SelectValue placeholder="Select session" /></SelectTrigger>
-              <SelectContent>{SESSIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                <SelectItem value="__none__">None</SelectItem>
+                {SESSIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
             </Select>
           </Field>
           <Field label="Grade">
-            <Select value={form.grade} onValueChange={(v) => set("grade", v)}>
+            <Select value={form.grade || "__none__"} onValueChange={(v) => set("grade", v === "__none__" ? "" : v)}>
               <SelectTrigger><SelectValue placeholder="Select grade" /></SelectTrigger>
-              <SelectContent>{GRADES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                <SelectItem value="__none__">None</SelectItem>
+                {GRADES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
             </Select>
           </Field>
           <div className="sm:col-span-2">
