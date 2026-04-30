@@ -13,5 +13,5 @@ export default async function JournalPage() {
     sb.from("accounts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
   ]);
 
-  return <JournalClient initialTrades={trades ?? []} accounts={accounts ?? []} />;
+  return <JournalClient initialTrades={trades ?? []} accounts={accounts ?? []} userId={user.id} />;
 }

@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fmtMoney } from "@/lib/utils";
-import { TrendingUp, BookOpen, AlertTriangle, Plus } from "lucide-react";
+import { TrendingUp, BookOpen } from "lucide-react";
 import { EquityChart } from "@/components/journal/equity-chart";
+import { QuickTradeButtons } from "@/components/journal/quick-trade-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +16,9 @@ export default async function DashboardPage() {
   const { user, profile } = await requireRole(["user", "moderator", "admin"]);
   const sb = await createClient();
 
-  const [{ data: trades }, { data: cooldowns }, { data: recentJournal }] = await Promise.all([
+  const [{ data: trades }, { data: accounts }, { data: recentJournal }] = await Promise.all([
     sb.from("trades").select("*").eq("user_id", user.id).order("trade_date", { ascending: false }).limit(500),
-    sb.from("cooldowns").select("*").eq("user_id", user.id).eq("is_active", true).gt("ends_at", new Date().toISOString()).order("ends_at", { ascending: true }),
+    sb.from("accounts").select("id, name").eq("user_id", user.id),
     sb.from("journal_entries").select("*").eq("user_id", user.id).order("entry_date", { ascending: false }).limit(3),
   ]);
 
@@ -28,43 +29,54 @@ export default async function DashboardPage() {
   const grossP = (trades ?? []).filter(t=>t.pnl>0).reduce((s,t)=>s+t.pnl,0);
   const grossL = Math.abs((trades ?? []).filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
   const pf = grossL > 0 ? grossP / grossL : grossP > 0 ? 999 : 0;
-  const activeCooldown = cooldowns?.[0];
 
-  // Build equity series
   const sorted = [...(trades ?? [])].sort((a,b)=> new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime());
   let cum = 0;
   const series = sorted.map(t => { cum += (t.pnl - t.commission); return { x: t.trade_date, y: cum }; });
 
   return (
     <div className="p-4 md:p-8">
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold md:text-3xl">Welcome back{profile.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}</h1>
           <p className="text-sm text-muted-foreground">Your trading overview</p>
         </div>
-        <Button asChild><Link href="/journal"><Plus className="mr-1 h-4 w-4" />Log Trade</Link></Button>
+        <QuickTradeButtons accounts={accounts ?? []} userId={user.id} />
       </div>
 
-      {activeCooldown && (
-        <Card className="mb-6 border-amber-500/50 bg-amber-500/5">
-          <CardContent className="flex items-start gap-3 p-4">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
-            <div>
-              <div className="text-sm font-semibold">Cooldown Active</div>
-              <div className="text-sm text-muted-foreground">
-                {activeCooldown.reason ?? "Discipline lock"} — ends {new Date(activeCooldown.ends_at).toLocaleString()}
-              </div>
+      {/* Stats */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Net P&L</div>
+            <div className={`text-2xl font-black md:text-3xl ${totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
+              {totalPnl >= 0 ? "+" : ""}{fmtMoney(Math.abs(totalPnl))}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">{trades?.length ?? 0} trades</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Win Rate</div>
+            <div className="text-2xl font-black md:text-3xl text-blue-400">{winRate.toFixed(1)}%</div>
+            <div className="text-xs text-muted-foreground mt-1">{wins}W / {losses}L</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Profit Factor</div>
+            <div className={`text-2xl font-black md:text-3xl ${pf >= 1.5 ? "text-green-400" : pf >= 1 ? "text-amber-400" : "text-red-400"}`}>
+              {pf === 999 ? "∞" : pf.toFixed(2)}
             </div>
           </CardContent>
         </Card>
-      )}
-
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <Stat label="Net P&L" value={fmtMoney(totalPnl)} accent={totalPnl >= 0 ? "text-green-500" : "text-red-500"} sub={`${trades?.length ?? 0} trades`} />
-        <Stat label="Win Rate" value={`${winRate.toFixed(1)}%`} accent="text-blue-500" sub={`${wins}W / ${losses}L`} />
-        <Stat label="Profit Factor" value={pf === 999 ? "∞" : pf.toFixed(2)} accent={pf >= 1.5 ? "text-green-500" : pf >= 1 ? "text-amber-500" : "text-red-500"} />
-        <Stat label="Plan" value={profile.plan.toUpperCase()} accent="text-primary" sub="Subscription" />
-        <Stat label="Account" value={profile.role.toUpperCase()} accent={profile.role === "admin" ? "text-destructive" : "text-foreground"} sub={profile.email} />
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Plan</div>
+            <div className="text-2xl font-black md:text-3xl text-primary">{profile.plan.toUpperCase()}</div>
+            <div className="text-xs text-muted-foreground mt-1 capitalize">{profile.role}</div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -109,38 +121,33 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm">Recent Trades</CardTitle>
-          <Button size="sm" variant="ghost" asChild><Link href="/journal"><TrendingUp className="mr-1 h-3.5 w-3.5" />All Trades</Link></Button>
+          <Button size="sm" variant="ghost" asChild><Link href="/trades"><TrendingUp className="mr-1 h-3.5 w-3.5" />All Trades</Link></Button>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent className="overflow-x-auto p-0">
           <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Symbol</TableHead><TableHead>Dir</TableHead><TableHead>P&amp;L</TableHead><TableHead>R</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Symbol</TableHead><TableHead>Dir</TableHead><TableHead>Net P&L</TableHead><TableHead>R</TableHead></TableRow></TableHeader>
             <TableBody>
-              {(trades ?? []).slice(0, 10).map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell className="text-xs">{t.trade_date}</TableCell>
-                  <TableCell className="font-medium">{t.symbol}</TableCell>
-                  <TableCell><Badge variant={t.direction === "Long" ? "success" : "destructive"}>{t.direction}</Badge></TableCell>
-                  <TableCell className={t.pnl >= 0 ? "text-green-500" : "text-red-500"}>{fmtMoney(t.pnl)}</TableCell>
-                  <TableCell className="text-xs">{t.r_multiple != null ? `${t.r_multiple}R` : "—"}</TableCell>
-                </TableRow>
-              ))}
-              {(!trades || trades.length === 0) && <TableRow><TableCell colSpan={5} className="py-8 text-center text-muted-foreground">No trades yet — <Link href="/journal" className="text-primary hover:underline">log your first trade</Link></TableCell></TableRow>}
+              {(trades ?? []).slice(0, 10).map((t) => {
+                const net = t.pnl - t.commission;
+                return (
+                  <TableRow key={t.id} className="cursor-pointer hover:bg-accent/50" onClick={() => {}}>
+                    <TableCell className="text-xs">{t.trade_date}</TableCell>
+                    <TableCell className="font-semibold">{t.symbol}</TableCell>
+                    <TableCell>
+                      <Badge className={t.direction === "Long" ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}>{t.direction}</Badge>
+                    </TableCell>
+                    <TableCell className={`font-bold text-base ${net >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      {net >= 0 ? "+" : ""}{fmtMoney(Math.abs(net))}
+                    </TableCell>
+                    <TableCell className="text-xs">{t.r_multiple != null ? `${t.r_multiple}R` : "—"}</TableCell>
+                  </TableRow>
+                );
+              })}
+              {(!trades || trades.length === 0) && <TableRow><TableCell colSpan={5} className="py-8 text-center text-muted-foreground">No trades yet — <Link href="/trades/new" className="text-primary hover:underline">log your first trade</Link></TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function Stat({ label, value, accent, sub }: { label: string; value: string; accent?: string; sub?: string }) {
-  return (
-    <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</CardTitle></CardHeader>
-      <CardContent>
-        <div className={"text-xl font-bold md:text-2xl " + (accent ?? "")}>{value}</div>
-        {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
-      </CardContent>
-    </Card>
   );
 }
