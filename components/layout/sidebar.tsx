@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Settings, Shield, LogOut, TrendingUp, PlusCircle, Upload, DollarSign, CalendarDays, List, BookOpen, BarChart2, ChevronLeft, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Settings, Shield, LogOut, TrendingUp, DollarSign, CalendarDays, List, BookOpen, BarChart2, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -12,8 +12,6 @@ import type { Profile } from "@/lib/auth";
 const NAV = [
   { href: "/dashboard",        label: "Dashboard",               icon: LayoutDashboard },
   { href: "/trades",           label: "Trades",                  icon: List },
-  { href: "/trades/new",       label: "New Trade",               icon: PlusCircle },
-  { href: "/import",           label: "Import CSV",              icon: Upload },
   { href: "/eval",             label: "Eval Expenses & Payouts", icon: DollarSign },
   { href: "/journal/calendar", label: "Playbook Calendar",       icon: CalendarDays },
   { href: "/strategies",       label: "Strategies",              icon: BookOpen },
