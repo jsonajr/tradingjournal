@@ -300,7 +300,7 @@ export function TradeDetailClient({ trade: initialTrade, adjacent, accounts }: {
     setSavingNotes(true);
     const res = await fetch("/api/trades/update", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: trade.id, ...trade, notes }),
+      body: JSON.stringify({ ...trade, accounts: undefined, notes }),
     });
     setSavingNotes(false);
     if (!res.ok) { toast.error("Failed to save notes"); return; }
