@@ -207,7 +207,7 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                     <button key={i} onClick={() => c.cur && openEntry(dateStr)} disabled={!c.cur}
                       className={cn(
                         "relative flex flex-col items-center justify-center rounded-lg border-2 text-left transition-all overflow-hidden",
-                        "aspect-square w-full",
+                        "w-full h-16 md:h-20",
                         c.cur ? "hover:border-primary hover:scale-[1.03] cursor-pointer" : "opacity-15 cursor-default",
                         isToday ? "border-primary ring-2 ring-primary ring-offset-1 ring-offset-background" : pnl != null && pnl > 0 ? "border-green-500/40" : pnl != null && pnl < 0 ? "border-red-500/40" : "border-border",
                         dayBg
