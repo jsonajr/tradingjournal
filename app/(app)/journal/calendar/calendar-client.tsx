@@ -190,11 +190,11 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="px-3 pb-3">
-              <div className="mb-1 grid grid-cols-7 gap-0.5">
-                {DOW.map((d) => <div key={d} className="py-1 text-center text-[9px] font-semibold uppercase text-muted-foreground">{d}</div>)}
+            <CardContent className="px-2 pb-3">
+              <div className="mb-1 grid grid-cols-7 gap-1">
+                {DOW.map((d) => <div key={d} className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{d}</div>)}
               </div>
-              <div className="grid grid-cols-7 gap-0.5">
+              <div className="grid grid-cols-7 gap-1">
                 {cells.map((c, i) => {
                   const dateStr = c.cur ? `${year}-${String(month + 1).padStart(2, "0")}-${String(c.day).padStart(2, "0")}` : "";
                   const e = dateStr ? entryByDate[dateStr] : null;
@@ -202,34 +202,51 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                   const pnl = stats?.pnl ?? null;
                   const tradeCount = stats?.count ?? null;
                   const isToday = dateStr === today;
-                  const moodColor = e?.mood === "great" ? "bg-green-500/20 text-green-600" : e?.mood === "good" ? "bg-blue-500/15 text-blue-500" : e?.mood === "bad" || e?.mood === "terrible" ? "bg-red-500/15 text-red-500" : "bg-amber-500/15 text-amber-600";
                   const dayBg = pnl == null ? "" : pnl > 0 ? "bg-green-500/10" : pnl < 0 ? "bg-red-500/10" : "bg-zinc-500/10";
                   return (
                     <button key={i} onClick={() => c.cur && openEntry(dateStr)} disabled={!c.cur}
                       className={cn(
-                        "aspect-square w-full flex flex-col rounded border-2 p-1 text-left transition-colors overflow-hidden",
-                        c.cur ? "hover:border-primary cursor-pointer" : "opacity-20 cursor-default",
-                        isToday && "border-primary ring-1 ring-primary",
-                        pnl != null && pnl > 0 && "border-green-500/30",
-                        pnl != null && pnl < 0 && "border-red-500/30",
+                        "relative flex flex-col items-center justify-center rounded-lg border-2 text-left transition-all overflow-hidden",
+                        "aspect-square w-full",
+                        c.cur ? "hover:border-primary hover:scale-[1.03] cursor-pointer" : "opacity-15 cursor-default",
+                        isToday ? "border-primary ring-2 ring-primary ring-offset-1 ring-offset-background" : pnl != null && pnl > 0 ? "border-green-500/40" : pnl != null && pnl < 0 ? "border-red-500/40" : "border-border",
                         dayBg
                       )}>
-                      <div className={cn("text-[10px] font-bold leading-none", isToday && "text-primary")}>{c.day}</div>
+                      {/* Day number — top-left */}
+                      <span className={cn(
+                        "absolute top-1 left-1.5 text-[10px] font-bold leading-none",
+                        isToday ? "text-primary" : "text-muted-foreground"
+                      )}>{c.cur ? c.day : ""}</span>
+
+                      {/* Journal dot — top-right */}
                       {e && (
-                        <div className={cn("mt-0.5 rounded px-0.5 text-[7px] font-semibold leading-tight truncate", moodColor)}>
-                          {e.bias?.slice(0,1)}{e.bias ? " · " : ""}{e.title?.slice(0,6) || "✓"}
-                        </div>
+                        <span className={cn(
+                          "absolute top-1 right-1 h-1.5 w-1.5 rounded-full",
+                          e.mood === "great" ? "bg-green-500" : e.mood === "good" ? "bg-blue-400" : e.mood === "bad" || e.mood === "terrible" ? "bg-red-500" : "bg-amber-400"
+                        )} />
                       )}
-                      {pnl != null && (
-                        <div className="mt-auto">
-                          <div className={cn("text-[9px] font-black leading-tight", pnl >= 0 ? "text-green-500" : "text-red-500")}>
-                            {fmtPnlCents(pnl)}
-                          </div>
-                          {tradeCount != null && (
-                            <div className="text-[7px] text-muted-foreground/50 leading-none">{tradeCount}t</div>
-                          )}
-                        </div>
-                      )}
+
+                      {/* Center content */}
+                      <div className="flex flex-col items-center justify-center gap-0.5 mt-2">
+                        {pnl != null ? (
+                          <>
+                            <span className={cn(
+                              "font-black leading-none tabular-nums",
+                              "text-[11px] sm:text-xs md:text-sm",
+                              pnl >= 0 ? "text-green-500" : "text-red-500"
+                            )}>
+                              {fmtPnlCents(pnl)}
+                            </span>
+                            {tradeCount != null && (
+                              <span className="text-[8px] font-medium text-muted-foreground/60 leading-none">
+                                {tradeCount} {tradeCount === 1 ? "trade" : "trades"}
+                              </span>
+                            )}
+                          </>
+                        ) : e ? (
+                          <span className="text-[9px] text-muted-foreground/50">✓</span>
+                        ) : null}
+                      </div>
                     </button>
                   );
                 })}
