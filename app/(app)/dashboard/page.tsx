@@ -110,7 +110,7 @@ export default async function DashboardPage() {
             {mostProfitableDay ? mostProfitableDay[0].slice(0, 3) : "—"}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
-            {mostProfitableDay && mostProfitableDay[1] > 0 ? fmtMoney(mostProfitableDay[1], true) + " avg" : "No data"}
+            {mostProfitableDay && (mostProfitableDay[1] as number) > 0 ? fmtMoney(mostProfitableDay[1] as number, true) + " avg" : "No data"}
           </div>
         </CardContent></Card>
       </div>
