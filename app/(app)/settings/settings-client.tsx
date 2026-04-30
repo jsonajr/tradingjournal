@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { SessionsTab } from "./sessions-tab";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Trash2, User, Wallet, Settings as SettingsIcon, CreditCard, AlertTriangle, Palette } from "lucide-react";
+import { Plus, Trash2, User, Wallet, Settings as SettingsIcon, CreditCard, AlertTriangle, Palette, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -22,7 +23,7 @@ type Subscription = { plan: string; status: string; current_period_end: string |
 export function SettingsClient({ profile, accounts: initialAccounts, settings, subscription }: { profile: Profile; accounts: Account[]; settings: UserSettings; subscription: Subscription }) {
   const router = useRouter();
   const supabase = createClient();
-  const [tab, setTab] = useState<"profile" | "accounts" | "preferences" | "subscription" | "danger" | "theme">("profile");
+  const [tab, setTab] = useState<"profile" | "accounts" | "preferences" | "subscription" | "danger" | "theme" | "sessions">("profile");
   const [clearingTrades, setClearingTrades] = useState(false);
   const [accounts, setAccounts] = useState(initialAccounts);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
@@ -119,6 +120,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
         <TabBtn active={tab === "subscription"} onClick={() => setTab("subscription")}><CreditCard className="mr-1 h-3.5 w-3.5" />Subscription</TabBtn>
         <TabBtn active={tab === "danger"} onClick={() => setTab("danger")}><AlertTriangle className="mr-1 h-3.5 w-3.5 text-destructive" /><span className="text-destructive">Danger Zone</span></TabBtn>
         <TabBtn active={tab === "theme"} onClick={() => setTab("theme")}><Palette className="mr-1 h-3.5 w-3.5" />Theme</TabBtn>
+        <TabBtn active={tab === "sessions"} onClick={() => setTab("sessions")}><Shield className="mr-1 h-3.5 w-3.5" />Sessions</TabBtn>
       </div>
 
       {tab === "profile" && (
@@ -254,6 +256,8 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
       {tab === "theme" && (
         <ThemePanel profile={profile} />
       )}
+
+      {tab === "sessions" && <SessionsTab />}
 
       {/* Account dialog */}
       <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
