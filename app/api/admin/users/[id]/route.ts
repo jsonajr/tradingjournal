@@ -22,11 +22,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ message: "User unbanned" });
     case "set_role": {
       const role = body.role as string;
-      if (!["user", "moderator", "admin"].includes(role)) return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+      if (!["user", "moderator"].includes(role)) return NextResponse.json({ error: "Admin role can only be assigned via SQL" }, { status: 400 });
       await sb.from("profiles").update({ role }).eq("id", id);
       await logAdminAction(auth.profile.id, "set_role", id, { role });
       return NextResponse.json({ message: `Role updated to ${role}` });
     }
+    case "unsuspend":
+      await sb.from("cooldowns").update({ is_active: false })
+        .eq("user_id", id).ilike("reason", "SUSPENDED:%");
+      await logAdminAction(auth.profile.id, "unsuspend_user", id);
+      return NextResponse.json({ message: "Account unsuspended" });
     case "clear_trades":
       await sb.from("trades").delete().eq("user_id", id);
       await logAdminAction(auth.profile.id, "clear_trades", id);

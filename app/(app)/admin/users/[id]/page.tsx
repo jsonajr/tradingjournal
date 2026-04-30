@@ -26,6 +26,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   const losses = (trades ?? []).filter((t) => t.pnl < 0).length;
   const totalPnl = (trades ?? []).reduce((s, t) => s + t.pnl - t.commission, 0);
   const activeCooldown = (cooldowns ?? []).find((c) => c.is_active && new Date(c.ends_at) > new Date());
+  const isSuspended = (cooldowns ?? []).some((c) => c.is_active && new Date(c.ends_at) > new Date() && c.reason?.startsWith("SUSPENDED:"));
 
   return (
     <div className="p-4 md:p-8">
@@ -45,7 +46,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             {subscription?.status && <Badge variant="outline">Sub: {subscription.status}</Badge>}
           </div>
         </div>
-        <UserActions user={user} />
+        <UserActions user={user} isSuspended={isSuspended} />
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">

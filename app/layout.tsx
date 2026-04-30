@@ -21,8 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: `
           try {
             const t = localStorage.getItem('tj_theme');
-            if (t === 'light') document.documentElement.classList.remove('dark');
-            else document.documentElement.classList.add('dark');
+            const el = document.documentElement; el.classList.remove('dark','midnight'); if(t==='dark'||t==='midnight') el.classList.add('dark'); if(t==='midnight') el.classList.add('midnight');
             const a = localStorage.getItem('tj_accent');
             if (a) {
               const h = parseInt(a.slice(1,3),16)/255, s2 = parseInt(a.slice(3,5),16)/255, l2 = parseInt(a.slice(5,7),16)/255;

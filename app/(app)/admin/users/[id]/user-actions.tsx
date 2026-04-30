@@ -6,12 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Ban, Shield, Trash2, LogOut, Clock, PauseCircle, Trash } from "lucide-react";
+import { Ban, Shield, Trash2, LogOut, Clock, PauseCircle, PlayCircle, Trash } from "lucide-react";
 import { toast } from "sonner";
 
 type User = { id: string; email: string; role: string; plan: string; banned: boolean; suspended?: boolean };
 
-export function UserActions({ user }: { user: User }) {
+export function UserActions({ user, isSuspended }: { user: User; isSuspended?: boolean }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [cooldownOpen, setCooldownOpen] = useState(false);
@@ -67,19 +67,27 @@ export function UserActions({ user }: { user: User }) {
   function applySuspend() {
     const h = parseFloat(suspendHours);
     if (!h || h <= 0) { toast.error("Enter valid hours"); return; }
-    call("suspend", { hours: h, reason: suspendReason || "Admin suspension" });
+    if (!suspendReason.trim()) { toast.error("Reason is required"); return; }
+    call("suspend", { hours: h, reason: suspendReason });
     setSuspendOpen(false); setSuspendReason("");
   }
 
   return (
     <div className="flex flex-wrap gap-2">
-      {/* Role selector */}
-      <Select value={user.role} onValueChange={(role) => call("set_role", { role })} disabled={isPending}>
+      {/* Role selector — admin role blocked, only SQL */}
+      <Select
+        value={user.role === "admin" ? "admin" : user.role}
+        onValueChange={(role) => {
+          if (role === "admin") { toast.error("Admin role can only be assigned via SQL"); return; }
+          call("set_role", { role });
+        }}
+        disabled={isPending}
+      >
         <SelectTrigger className="w-[140px]"><Shield className="mr-2 h-3.5 w-3.5" /><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="user">User</SelectItem>
           <SelectItem value="moderator">Moderator</SelectItem>
-          <SelectItem value="admin">Admin</SelectItem>
+          <SelectItem value="admin" disabled>Admin (SQL only)</SelectItem>
         </SelectContent>
       </Select>
 
@@ -110,27 +118,43 @@ export function UserActions({ user }: { user: User }) {
         </DialogContent>
       </Dialog>
 
-      {/* Suspend */}
-      <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
-        <Button variant="outline" size="sm" disabled={isPending} onClick={() => setSuspendOpen(true)}
-          className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10">
-          <PauseCircle className="mr-1 h-3.5 w-3.5" />Suspend
+      {/* Suspend / Unsuspend */}
+      {isSuspended ? (
+        <Button variant="outline" size="sm" disabled={isPending} onClick={() => call("unsuspend")}
+          className="border-green-500/50 text-green-500 hover:bg-green-500/10">
+          <PlayCircle className="mr-1 h-3.5 w-3.5" />Unsuspend
         </Button>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Suspend Account</DialogTitle>
-            <DialogDescription>Temporarily suspend {user.email}. They will be locked out for the specified duration.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5"><Label>Duration (hours)</Label><Input type="number" min="1" step="1" value={suspendHours} onChange={(e) => setSuspendHours(e.target.value)} /></div>
-            <div className="space-y-1.5"><Label>Reason</Label><Input value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)} placeholder="Reason for suspension..." /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setSuspendOpen(false)}>Cancel</Button>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={applySuspend}>Suspend Account</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      ) : (
+        <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+          <Button variant="outline" size="sm" disabled={isPending} onClick={() => setSuspendOpen(true)}
+            className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10">
+            <PauseCircle className="mr-1 h-3.5 w-3.5" />Suspend
+          </Button>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Suspend Account</DialogTitle>
+              <DialogDescription>The user can still log in but will see a suspension screen with your reason.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Reason shown to user <span className="text-destructive">*</span></Label>
+                <Input value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)} placeholder="e.g. Violation of trading rules..." autoFocus />
+                <p className="text-xs text-muted-foreground">This message will be displayed on the user&apos;s screen.</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Duration (hours)</Label>
+                <Input type="number" min="1" step="1" value={suspendHours} onChange={(e) => setSuspendHours(e.target.value)} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setSuspendOpen(false)}>Cancel</Button>
+              <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={applySuspend} disabled={!suspendReason.trim()}>
+                Suspend Account
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Force logout */}
       <Button variant="outline" size="sm" onClick={() => call("force_logout")} disabled={isPending}>
@@ -142,7 +166,7 @@ export function UserActions({ user }: { user: User }) {
         <Trash className="mr-1 h-3.5 w-3.5" />Clear Trades
       </Button>
 
-      {/* Ban with confirm dialog */}
+      {/* Ban with confirm */}
       <Dialog open={banConfirmOpen} onOpenChange={setBanConfirmOpen}>
         <Button variant={user.banned ? "outline" : "destructive"} size="sm" disabled={isPending} onClick={() => setBanConfirmOpen(true)}>
           <Ban className="mr-1 h-3.5 w-3.5" />{user.banned ? "Unban" : "Ban"}
@@ -153,7 +177,7 @@ export function UserActions({ user }: { user: User }) {
             <DialogDescription>
               {user.banned
                 ? "This will restore the user's access to the platform."
-                : "This will permanently block the user from accessing the platform and revoke all their sessions."}
+                : "This will permanently block the user and revoke all their sessions."}
             </DialogDescription>
           </DialogHeader>
           {!user.banned && (
@@ -171,7 +195,7 @@ export function UserActions({ user }: { user: User }) {
         </DialogContent>
       </Dialog>
 
-      {/* Delete user */}
+      {/* Delete */}
       <Button variant="destructive" size="sm" onClick={deleteUser} disabled={isPending}>
         <Trash2 className="mr-1 h-3.5 w-3.5" />Delete
       </Button>
