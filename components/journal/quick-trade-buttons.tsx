@@ -7,14 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PostTradeReflection } from "@/components/journal/post-trade-reflection";
+import { PreTradeCheck } from "@/components/journal/pre-trade-check";
 import { TrendingUp, TrendingDown, Upload, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const SYMBOLS = ["ES","NQ","MES","MNQ","CL","GC","RTY","YM","Other"];
 const SETUPS = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Other"];
-const SESSIONS = ["London","NY Open","NY AM","NY PM","Asia"];
 const GRADES = ["A+","A","B","C","D"];
 const PLATFORM_INFO: Record<string, string> = {
   tradovate: "Tradovate: Account → Reports → Fills → Export CSV",
@@ -27,12 +26,16 @@ type Account = { id: string; name: string };
 export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { accounts: Account[]; userId: string; popupEnabled?: boolean }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
+
+  // Step 1: pre-trade check
+  const [checkOpen, setCheckOpen] = useState(false);
+  const [checkDirection, setCheckDirection] = useState<"Long" | "Short">("Long");
+
+  // Step 2: trade form
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"manual" | "csv">("manual");
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [postTradeOpen, setPostTradeOpen] = useState(false);
-  const [lastTrade, setLastTrade] = useState<{ pnl: number; symbol: string; id?: string } | null>(null);
 
   // Manual form
   const [form, setForm] = useState({
@@ -55,18 +58,24 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
   function openFor(dir: "Long" | "Short") {
     setForm((f) => ({ ...f, direction: dir, trade_date: today }));
     setTab("manual");
+    if (popupEnabled) {
+      // Step 1: check yourself before logging
+      setCheckDirection(dir);
+      setCheckOpen(true);
+    } else {
+      setOpen(true);
+    }
+  }
+
+  function onCheckPassed() {
+    // Step 2: check passed — now open the trade entry form
+    setCheckOpen(false);
     setOpen(true);
   }
 
   async function save() {
     if (!form.account_id) { toast.error("Select an account"); return; }
     if (!form.pnl) { toast.error("Enter P&L"); return; }
-    const pnl = parseFloat(form.pnl) || 0;
-    // Show popup immediately — save happens in background
-    setLastTrade({ pnl, symbol: form.symbol, id: undefined });
-    setOpen(false);
-    if (popupEnabled) setPostTradeOpen(true);
-    // Background save
     setSaving(true);
     const res = await fetch("/api/trades", {
       method: "POST",
@@ -74,7 +83,7 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
       body: JSON.stringify({
         ...form,
         contracts: parseInt(form.contracts) || 1,
-        pnl,
+        pnl: parseFloat(form.pnl) || 0,
         entry_price: parseFloat(form.entry_price) || null,
         exit_price: parseFloat(form.exit_price) || null,
         stop_price: parseFloat(form.stop_price) || null,
@@ -83,9 +92,8 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
     });
     setSaving(false);
     if (!res.ok) { const d = await res.json(); toast.error(d.error ?? "Failed"); return; }
-    const saved = await res.json();
-    // Update trade id in lastTrade so reflection can link to it
-    setLastTrade((prev) => prev ? { ...prev, id: saved?.trade?.id } : prev);
+    toast.success("Trade logged!");
+    setOpen(false);
     router.refresh();
   }
 
@@ -145,6 +153,15 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
         </button>
       </div>
 
+      {/* Step 1: Pre-trade check */}
+      <PreTradeCheck
+        open={checkOpen}
+        direction={checkDirection}
+        onPass={onCheckPassed}
+        onCancel={() => setCheckOpen(false)}
+      />
+
+      {/* Step 2: Trade entry form */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -258,16 +275,6 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
           )}
         </DialogContent>
       </Dialog>
-
-      {lastTrade && (
-        <PostTradeReflection
-          open={postTradeOpen}
-          pnl={lastTrade.pnl}
-          symbol={lastTrade.symbol}
-          tradeId={lastTrade.id}
-          onDismiss={() => { setPostTradeOpen(false); setLastTrade(null); }}
-        />
-      )}
     </>
   );
 }
