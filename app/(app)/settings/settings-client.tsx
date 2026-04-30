@@ -38,6 +38,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
   // Settings state
   const [tz, setTz] = useState(settings?.timezone ?? "America/New_York");
   const [currency, setCurrency] = useState(settings?.default_currency ?? "USD");
+  const [language, setLanguage] = useState((settings as any)?.language ?? "en");
   const [postTradePopup, setPostTradePopup] = useState(settings?.post_trade_popup_enabled ?? true);
 
   async function saveProfile() {
@@ -50,7 +51,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
   }
 
   async function savePreferences() {
-    const { error } = await supabase.from("user_settings").upsert({ user_id: profile.id, timezone: tz, default_currency: currency, post_trade_popup_enabled: postTradePopup });
+    const { error } = await supabase.from("user_settings").upsert({ user_id: profile.id, timezone: tz, default_currency: currency, post_trade_popup_enabled: postTradePopup, language });
     if (error) { toast.error(error.message); return; }
     toast.success("Preferences saved");
     router.refresh();
@@ -211,68 +212,79 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
                 <Select value={tz} onValueChange={setTz}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent className="max-h-72">
-                    <SelectItem value="Pacific/Midway">UTC-11 – Midway Island</SelectItem>
-                    <SelectItem value="Pacific/Honolulu">UTC-10 – Hawaii (HST)</SelectItem>
-                    <SelectItem value="America/Anchorage">UTC-9 – Alaska (AKST)</SelectItem>
-                    <SelectItem value="America/Los_Angeles">UTC-8 – Pacific (PT)</SelectItem>
-                    <SelectItem value="America/Denver">UTC-7 – Mountain (MT)</SelectItem>
-                    <SelectItem value="America/Phoenix">UTC-7 – Arizona (no DST)</SelectItem>
-                    <SelectItem value="America/Chicago">UTC-6 – Central (CT)</SelectItem>
-                    <SelectItem value="America/New_York">UTC-5 – Eastern (ET)</SelectItem>
-                    <SelectItem value="America/Toronto">UTC-5 – Toronto</SelectItem>
-                    <SelectItem value="America/Halifax">UTC-4 – Atlantic (AT)</SelectItem>
-                    <SelectItem value="America/Sao_Paulo">UTC-3 – São Paulo</SelectItem>
-                    <SelectItem value="America/Argentina/Buenos_Aires">UTC-3 – Buenos Aires</SelectItem>
-                    <SelectItem value="Atlantic/Azores">UTC-1 – Azores</SelectItem>
-                    <SelectItem value="Europe/London">UTC+0 – London (GMT/BST)</SelectItem>
-                    <SelectItem value="Europe/Lisbon">UTC+0 – Lisbon</SelectItem>
-                    <SelectItem value="Africa/Casablanca">UTC+0 – Casablanca</SelectItem>
-                    <SelectItem value="Europe/Paris">UTC+1 – Paris / Berlin (CET)</SelectItem>
-                    <SelectItem value="Europe/Amsterdam">UTC+1 – Amsterdam</SelectItem>
-                    <SelectItem value="Europe/Madrid">UTC+1 – Madrid</SelectItem>
-                    <SelectItem value="Europe/Rome">UTC+1 – Rome</SelectItem>
-                    <SelectItem value="Africa/Lagos">UTC+1 – Lagos</SelectItem>
-                    <SelectItem value="Europe/Helsinki">UTC+2 – Helsinki (EET)</SelectItem>
-                    <SelectItem value="Europe/Athens">UTC+2 – Athens</SelectItem>
-                    <SelectItem value="Europe/Bucharest">UTC+2 – Bucharest</SelectItem>
-                    <SelectItem value="Africa/Cairo">UTC+2 – Cairo</SelectItem>
-                    <SelectItem value="Africa/Johannesburg">UTC+2 – Johannesburg</SelectItem>
-                    <SelectItem value="Europe/Istanbul">UTC+3 – Istanbul</SelectItem>
-                    <SelectItem value="Asia/Riyadh">UTC+3 – Riyadh</SelectItem>
-                    <SelectItem value="Africa/Nairobi">UTC+3 – Nairobi</SelectItem>
-                    <SelectItem value="Europe/Moscow">UTC+3 – Moscow</SelectItem>
-                    <SelectItem value="Asia/Tehran">UTC+3:30 – Tehran</SelectItem>
-                    <SelectItem value="Asia/Dubai">UTC+4 – Dubai</SelectItem>
-                    <SelectItem value="Asia/Baku">UTC+4 – Baku</SelectItem>
-                    <SelectItem value="Asia/Kabul">UTC+4:30 – Kabul</SelectItem>
-                    <SelectItem value="Asia/Karachi">UTC+5 – Karachi (PKT)</SelectItem>
-                    <SelectItem value="Asia/Tashkent">UTC+5 – Tashkent</SelectItem>
-                    <SelectItem value="Asia/Kolkata">UTC+5:30 – India (IST)</SelectItem>
-                    <SelectItem value="Asia/Colombo">UTC+5:30 – Sri Lanka</SelectItem>
-                    <SelectItem value="Asia/Kathmandu">UTC+5:45 – Kathmandu</SelectItem>
-                    <SelectItem value="Asia/Dhaka">UTC+6 – Dhaka</SelectItem>
-                    <SelectItem value="Asia/Almaty">UTC+6 – Almaty</SelectItem>
-                    <SelectItem value="Asia/Rangoon">UTC+6:30 – Yangon</SelectItem>
-                    <SelectItem value="Asia/Bangkok">UTC+7 – Bangkok (ICT)</SelectItem>
-                    <SelectItem value="Asia/Jakarta">UTC+7 – Jakarta</SelectItem>
-                    <SelectItem value="Asia/Ho_Chi_Minh">UTC+7 – Ho Chi Minh</SelectItem>
-                    <SelectItem value="Asia/Shanghai">UTC+8 – China (CST)</SelectItem>
-                    <SelectItem value="Asia/Hong_Kong">UTC+8 – Hong Kong</SelectItem>
-                    <SelectItem value="Asia/Singapore">UTC+8 – Singapore</SelectItem>
-                    <SelectItem value="Asia/Taipei">UTC+8 – Taipei</SelectItem>
-                    <SelectItem value="Australia/Perth">UTC+8 – Perth</SelectItem>
-                    <SelectItem value="Asia/Tokyo">UTC+9 – Tokyo (JST)</SelectItem>
-                    <SelectItem value="Asia/Seoul">UTC+9 – Seoul</SelectItem>
-                    <SelectItem value="Australia/Adelaide">UTC+9:30 – Adelaide</SelectItem>
-                    <SelectItem value="Australia/Darwin">UTC+9:30 – Darwin</SelectItem>
-                    <SelectItem value="Australia/Sydney">UTC+10 – Sydney (AEST)</SelectItem>
-                    <SelectItem value="Australia/Brisbane">UTC+10 – Brisbane</SelectItem>
-                    <SelectItem value="Pacific/Guam">UTC+10 – Guam</SelectItem>
-                    <SelectItem value="Australia/Lord_Howe">UTC+10:30 – Lord Howe</SelectItem>
-                    <SelectItem value="Pacific/Noumea">UTC+11 – Noumea</SelectItem>
-                    <SelectItem value="Pacific/Auckland">UTC+12 – Auckland (NZST)</SelectItem>
-                    <SelectItem value="Pacific/Fiji">UTC+12 – Fiji</SelectItem>
-                    <SelectItem value="Pacific/Tongatapu">UTC+13 – Tonga</SelectItem>
+                    <SelectItem value="Pacific/Midway">Midway Island</SelectItem>
+                    <SelectItem value="Pacific/Honolulu">Hawaii (HST)</SelectItem>
+                    <SelectItem value="America/Anchorage">Alaska (AKST/AKDT)</SelectItem>
+                    <SelectItem value="America/Los_Angeles">Pacific Time – Los Angeles (PT)</SelectItem>
+                    <SelectItem value="America/Vancouver">Pacific Time – Vancouver (PT)</SelectItem>
+                    <SelectItem value="America/Denver">Mountain Time – Denver (MT)</SelectItem>
+                    <SelectItem value="America/Phoenix">Mountain Time – Arizona (no DST)</SelectItem>
+                    <SelectItem value="America/Chicago">Central Time – Chicago (CT)</SelectItem>
+                    <SelectItem value="America/Mexico_City">Central Time – Mexico City</SelectItem>
+                    <SelectItem value="America/New_York">Eastern Time – New York (ET)</SelectItem>
+                    <SelectItem value="America/Toronto">Eastern Time – Toronto (ET)</SelectItem>
+                    <SelectItem value="America/Detroit">Eastern Time – Detroit (ET)</SelectItem>
+                    <SelectItem value="America/Halifax">Atlantic Time – Halifax (AT)</SelectItem>
+                    <SelectItem value="America/Puerto_Rico">Atlantic Time – Puerto Rico (no DST)</SelectItem>
+                    <SelectItem value="America/St_Johns">Newfoundland – St. John's (NST)</SelectItem>
+                    <SelectItem value="America/Sao_Paulo">Brasília – São Paulo (BRT)</SelectItem>
+                    <SelectItem value="America/Argentina/Buenos_Aires">Buenos Aires (ART, no DST)</SelectItem>
+                    <SelectItem value="America/Santiago">Santiago (CLT)</SelectItem>
+                    <SelectItem value="America/Bogota">Bogotá / Lima / Quito (COT, no DST)</SelectItem>
+                    <SelectItem value="America/Caracas">Caracas (VET)</SelectItem>
+                    <SelectItem value="Atlantic/Azores">Azores (AZOT)</SelectItem>
+                    <SelectItem value="Atlantic/Cape_Verde">Cape Verde (CVT, no DST)</SelectItem>
+                    <SelectItem value="Europe/London">London (GMT/BST)</SelectItem>
+                    <SelectItem value="Europe/Lisbon">Lisbon (WET/WEST)</SelectItem>
+                    <SelectItem value="Africa/Casablanca">Casablanca (WET)</SelectItem>
+                    <SelectItem value="Africa/Abidjan">Abidjan / Accra (GMT, no DST)</SelectItem>
+                    <SelectItem value="Europe/Paris">Paris / Berlin / Rome (CET/CEST)</SelectItem>
+                    <SelectItem value="Europe/Amsterdam">Amsterdam (CET/CEST)</SelectItem>
+                    <SelectItem value="Europe/Madrid">Madrid (CET/CEST)</SelectItem>
+                    <SelectItem value="Europe/Zurich">Zurich / Geneva (CET/CEST)</SelectItem>
+                    <SelectItem value="Europe/Stockholm">Stockholm (CET/CEST)</SelectItem>
+                    <SelectItem value="Africa/Lagos">Lagos / West Africa (WAT, no DST)</SelectItem>
+                    <SelectItem value="Europe/Helsinki">Helsinki / Tallinn (EET/EEST)</SelectItem>
+                    <SelectItem value="Europe/Athens">Athens (EET/EEST)</SelectItem>
+                    <SelectItem value="Europe/Bucharest">Bucharest (EET/EEST)</SelectItem>
+                    <SelectItem value="Europe/Kiev">Kyiv (EET/EEST)</SelectItem>
+                    <SelectItem value="Africa/Cairo">Cairo (EET, no DST)</SelectItem>
+                    <SelectItem value="Africa/Johannesburg">Johannesburg (SAST, no DST)</SelectItem>
+                    <SelectItem value="Europe/Istanbul">Istanbul (TRT, no DST)</SelectItem>
+                    <SelectItem value="Asia/Riyadh">Riyadh / Bahrain / Kuwait (AST, no DST)</SelectItem>
+                    <SelectItem value="Africa/Nairobi">Nairobi / East Africa (EAT, no DST)</SelectItem>
+                    <SelectItem value="Europe/Moscow">Moscow (MSK, no DST)</SelectItem>
+                    <SelectItem value="Asia/Tehran">Tehran (IRST/IRDT)</SelectItem>
+                    <SelectItem value="Asia/Dubai">Dubai / Abu Dhabi (GST, no DST)</SelectItem>
+                    <SelectItem value="Asia/Baku">Baku (AZT)</SelectItem>
+                    <SelectItem value="Asia/Kabul">Kabul (AFT, no DST)</SelectItem>
+                    <SelectItem value="Asia/Karachi">Karachi (PKT, no DST)</SelectItem>
+                    <SelectItem value="Asia/Tashkent">Tashkent (UZT, no DST)</SelectItem>
+                    <SelectItem value="Asia/Kolkata">India – Mumbai / Delhi (IST, no DST)</SelectItem>
+                    <SelectItem value="Asia/Colombo">Colombo / Sri Lanka (SLST, no DST)</SelectItem>
+                    <SelectItem value="Asia/Kathmandu">Kathmandu (NPT, no DST)</SelectItem>
+                    <SelectItem value="Asia/Dhaka">Dhaka (BST, no DST)</SelectItem>
+                    <SelectItem value="Asia/Almaty">Almaty (ALMT, no DST)</SelectItem>
+                    <SelectItem value="Asia/Rangoon">Yangon (MMT, no DST)</SelectItem>
+                    <SelectItem value="Asia/Bangkok">Bangkok / Jakarta / Hanoi (ICT, no DST)</SelectItem>
+                    <SelectItem value="Asia/Shanghai">China – Beijing / Shanghai (CST, no DST)</SelectItem>
+                    <SelectItem value="Asia/Hong_Kong">Hong Kong (HKT, no DST)</SelectItem>
+                    <SelectItem value="Asia/Singapore">Singapore (SGT, no DST)</SelectItem>
+                    <SelectItem value="Asia/Taipei">Taipei (CST, no DST)</SelectItem>
+                    <SelectItem value="Asia/Kuala_Lumpur">Kuala Lumpur (MYT, no DST)</SelectItem>
+                    <SelectItem value="Australia/Perth">Perth (AWST, no DST)</SelectItem>
+                    <SelectItem value="Asia/Tokyo">Tokyo (JST, no DST)</SelectItem>
+                    <SelectItem value="Asia/Seoul">Seoul (KST, no DST)</SelectItem>
+                    <SelectItem value="Australia/Adelaide">Adelaide (ACST/ACDT)</SelectItem>
+                    <SelectItem value="Australia/Darwin">Darwin (ACST, no DST)</SelectItem>
+                    <SelectItem value="Australia/Sydney">Sydney / Melbourne (AEST/AEDT)</SelectItem>
+                    <SelectItem value="Australia/Brisbane">Brisbane (AEST, no DST)</SelectItem>
+                    <SelectItem value="Pacific/Guam">Guam / Saipan (ChST, no DST)</SelectItem>
+                    <SelectItem value="Pacific/Noumea">Noumea (NCT, no DST)</SelectItem>
+                    <SelectItem value="Pacific/Auckland">Auckland (NZST/NZDT)</SelectItem>
+                    <SelectItem value="Pacific/Fiji">Fiji (FJT)</SelectItem>
+                    <SelectItem value="Pacific/Tongatapu">Tonga (TOT, no DST)</SelectItem>
+                    <SelectItem value="Pacific/Apia">Apia / Samoa (WST)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -284,6 +296,34 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
                     <SelectItem value="USD">USD ($)</SelectItem>
                     <SelectItem value="EUR">EUR (€)</SelectItem>
                     <SelectItem value="GBP">GBP (£)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Language</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="es">Español (Spanish)</SelectItem>
+                    <SelectItem value="fr">Français (French)</SelectItem>
+                    <SelectItem value="de">Deutsch (German)</SelectItem>
+                    <SelectItem value="pt">Português (Portuguese)</SelectItem>
+                    <SelectItem value="it">Italiano (Italian)</SelectItem>
+                    <SelectItem value="nl">Nederlands (Dutch)</SelectItem>
+                    <SelectItem value="pl">Polski (Polish)</SelectItem>
+                    <SelectItem value="ru">Русский (Russian)</SelectItem>
+                    <SelectItem value="tr">Türkçe (Turkish)</SelectItem>
+                    <SelectItem value="ar">العربية (Arabic)</SelectItem>
+                    <SelectItem value="zh">中文 (Chinese Simplified)</SelectItem>
+                    <SelectItem value="zh-TW">中文繁體 (Chinese Traditional)</SelectItem>
+                    <SelectItem value="ja">日本語 (Japanese)</SelectItem>
+                    <SelectItem value="ko">한국어 (Korean)</SelectItem>
+                    <SelectItem value="hi">हिन्दी (Hindi)</SelectItem>
+                    <SelectItem value="id">Bahasa Indonesia</SelectItem>
+                    <SelectItem value="ms">Bahasa Melayu (Malay)</SelectItem>
+                    <SelectItem value="th">ภาษาไทย (Thai)</SelectItem>
+                    <SelectItem value="vi">Tiếng Việt (Vietnamese)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -61,6 +61,12 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
   async function save() {
     if (!form.account_id) { toast.error("Select an account"); return; }
     if (!form.pnl) { toast.error("Enter P&L"); return; }
+    const pnl = parseFloat(form.pnl) || 0;
+    // Show popup immediately — save happens in background
+    setLastTrade({ pnl, symbol: form.symbol, id: undefined });
+    setOpen(false);
+    if (popupEnabled) setPostTradeOpen(true);
+    // Background save
     setSaving(true);
     const res = await fetch("/api/trades", {
       method: "POST",
@@ -68,7 +74,7 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
       body: JSON.stringify({
         ...form,
         contracts: parseInt(form.contracts) || 1,
-        pnl: parseFloat(form.pnl) || 0,
+        pnl,
         entry_price: parseFloat(form.entry_price) || null,
         exit_price: parseFloat(form.exit_price) || null,
         stop_price: parseFloat(form.stop_price) || null,
@@ -78,10 +84,8 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
     setSaving(false);
     if (!res.ok) { const d = await res.json(); toast.error(d.error ?? "Failed"); return; }
     const saved = await res.json();
-    const pnl = parseFloat(form.pnl) || 0;
-    setLastTrade({ pnl, symbol: form.symbol, id: saved?.trade?.id });
-    setOpen(false);
-    if (popupEnabled) setPostTradeOpen(true);
+    // Update trade id in lastTrade so reflection can link to it
+    setLastTrade((prev) => prev ? { ...prev, id: saved?.trade?.id } : prev);
     router.refresh();
   }
 
