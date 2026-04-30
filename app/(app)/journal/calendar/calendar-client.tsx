@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,12 +53,20 @@ function fmtPnlCents(pnl: number): string {
 
 export function CalendarClient({ initialEntries, trades }: { initialEntries: Entry[]; trades: TradeMini[] }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [entries, setEntries] = useState(initialEntries);
   const [view, setView] = useState<"cal" | "list">("cal");
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth());
-  const [editing, setEditing] = useState<Entry | null>(null);
-  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<Entry | null>(() => {
+    const editDate = searchParams.get("edit");
+    if (editDate) {
+      const existing = initialEntries.find((e) => e.entry_date === editDate);
+      return existing ?? null;
+    }
+    return null;
+  });
+  const [editorOpen, setEditorOpen] = useState(() => !!searchParams.get("edit"));
 
   const entryByDate = useMemo(() => { const m: Record<string, Entry> = {}; entries.forEach((e) => { m[e.entry_date] = e; }); return m; }, [entries]);
   const statsByDate = useMemo(() => {
@@ -87,7 +95,13 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
 
   function openEntry(dateStr: string) {
     const existing = entryByDate[dateStr];
-    setEditing(existing ?? { id: "", entry_date: dateStr, title: null, bias: null, mood: null, rating: null, plan: null, notes: null, setups: [], sessions: [], rules_followed: null, improvement: null, tags: [] });
+    if (existing) {
+      // Navigate to full journal day page
+      router.push(`/journal/calendar/${dateStr}`);
+      return;
+    }
+    // No entry yet — open the editor dialog
+    setEditing({ id: "", entry_date: dateStr, title: null, bias: null, mood: null, rating: null, plan: null, notes: null, setups: [], sessions: [], rules_followed: null, improvement: null, tags: [] });
     setEditorOpen(true);
   }
 
