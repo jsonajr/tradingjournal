@@ -268,6 +268,7 @@ export function TradeDetailClient({ trade: initialTrade, adjacent, accounts }: {
   const [savingNotes, setSavingNotes] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
+  const net = trade.pnl - trade.commission;
   const account = getAccount(trade.accounts);
   const isWin = net >= 0;
 
