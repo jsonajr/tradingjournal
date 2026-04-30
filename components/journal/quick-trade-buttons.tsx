@@ -130,26 +130,26 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
   return (
     <>
       {/* Desktop inline */}
-      <div className="hidden md:flex gap-2">
-        <Button onClick={() => openFor("Long")} className="bg-green-600 hover:bg-green-500 text-white font-bold" size="sm">
-          <TrendingUp className="mr-1.5 h-4 w-4" />Log Win
+      <div className="hidden md:flex gap-3">
+        <Button onClick={() => openFor("Long")} className="bg-green-600 hover:bg-green-500 text-white font-black text-lg px-8 py-6 rounded-xl shadow-lg shadow-green-900/30" size="default">
+          <TrendingUp className="mr-2.5 h-6 w-6" />Log Win
         </Button>
-        <Button onClick={() => openFor("Short")} className="bg-red-600 hover:bg-red-500 text-white font-bold" size="sm">
-          <TrendingDown className="mr-1.5 h-4 w-4" />Log Loss
+        <Button onClick={() => openFor("Short")} className="bg-red-600 hover:bg-red-500 text-white font-black text-lg px-8 py-6 rounded-xl shadow-lg shadow-red-900/30" size="default">
+          <TrendingDown className="mr-2.5 h-6 w-6" />Log Loss
         </Button>
       </div>
 
       {/* Mobile floating */}
       <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+60px)] right-3 z-50 flex flex-col gap-2 md:hidden">
         <button onClick={() => openFor("Long")}
-          className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-green-600 text-white shadow-lg shadow-green-900/40 active:scale-95 transition-transform">
-          <span className="text-xl leading-none">📈</span>
-          <span className="text-[9px] font-bold mt-0.5">WIN</span>
+          className="flex h-14 w-14 flex-col items-center justify-center rounded-xl bg-green-600 text-white shadow-lg shadow-green-900/40 active:scale-95 transition-transform">
+          <span className="text-2xl leading-none">📈</span>
+          <span className="text-[10px] font-bold mt-0.5">WIN</span>
         </button>
         <button onClick={() => openFor("Short")}
-          className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-red-600 text-white shadow-lg shadow-red-900/40 active:scale-95 transition-transform">
-          <span className="text-xl leading-none">📉</span>
-          <span className="text-[9px] font-bold mt-0.5">LOSS</span>
+          className="flex h-14 w-14 flex-col items-center justify-center rounded-xl bg-red-600 text-white shadow-lg shadow-red-900/40 active:scale-95 transition-transform">
+          <span className="text-2xl leading-none">📉</span>
+          <span className="text-[10px] font-bold mt-0.5">LOSS</span>
         </button>
       </div>
 
