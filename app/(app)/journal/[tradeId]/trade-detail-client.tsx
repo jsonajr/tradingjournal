@@ -46,7 +46,9 @@ function TradingViewWidget({ symbol, interval, entry, exit, stop, direction, tra
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<unknown>(null);
-  const tvSymbol = TV_SYMBOL_MAP[symbol] ?? symbol;
+  // Strip expiry suffix e.g. MNQM6 → MNQ, ESZ5 → ES
+  const baseSymbol = symbol.replace(/[A-Z]\d+$/, "");
+  const tvSymbol = TV_SYMBOL_MAP[baseSymbol] ?? TV_SYMBOL_MAP[symbol] ?? `CME_MINI:${baseSymbol}1!`;
 
   useEffect(() => {
     if (!containerRef.current) return;
