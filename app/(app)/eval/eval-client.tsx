@@ -181,7 +181,7 @@ export function EvalClient({
             <span className="text-sm font-semibold text-red-500">{fmt(totalExp)}</span>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="max-h-72 overflow-y-auto">
+            <div className="max-h-[420px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -222,7 +222,7 @@ export function EvalClient({
             <span className="text-sm font-semibold text-green-500">{fmt(totalPay)}</span>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="max-h-72 overflow-y-auto">
+            <div className="max-h-[420px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow>
