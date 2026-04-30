@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireRole } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,7 +18,6 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   if (!user) notFound();
 
   // Get current admin's timezone preference
-  const { requireRole } = await import("@/lib/auth");
   const { user: adminUser } = await requireRole(["admin", "moderator"]);
   const { data: adminSettings } = await sb.from("user_settings").select("timezone").eq("user_id", adminUser.id).maybeSingle();
   const tz = adminSettings?.timezone || "America/New_York";
