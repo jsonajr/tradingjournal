@@ -14,8 +14,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Plus, Upload, Trash2, BookOpen, CheckSquare, Square } from "lucide-react";
 import { fmtMoney } from "@/lib/utils";
 import { toast } from "sonner";
-import { PostTradeModal } from "@/components/journal/post-trade-modal";
-import { QuickTradeButtons } from "@/components/journal/quick-trade-buttons";
 
 type Account = { id: string; name: string; firm: string | null; type: string };
 type Trade = {
@@ -45,8 +43,6 @@ export function JournalClient({ initialTrades, accounts, userId }: { initialTrad
   const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [postTradeOpen, setPostTradeOpen] = useState(false);
-  const [lastTrade, setLastTrade] = useState<{ pnl: number; symbol: string } | null>(null);
 
   const today = new Date().toISOString().split("T")[0];
   const [form, setForm] = useState({
@@ -80,9 +76,6 @@ export function JournalClient({ initialTrades, accounts, userId }: { initialTrad
     if (!res.ok) { toast.error(data.error ?? "Failed"); return; }
     setTrades([data.trade, ...trades]);
     setTradeDialogOpen(false);
-    const pnl = parseFloat(form.pnl) || 0;
-    setLastTrade({ pnl, symbol: form.symbol });
-    setPostTradeOpen(true);
     router.refresh();
   }
 
@@ -145,7 +138,6 @@ export function JournalClient({ initialTrades, accounts, userId }: { initialTrad
           <p className="text-sm text-muted-foreground">{trades.length} trades logged</p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          <QuickTradeButtons accounts={accounts} userId={userId} />
           <Button variant="outline" asChild><Link href="/journal/calendar"><BookOpen className="mr-1 h-4 w-4" />Playbook</Link></Button>
           <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
             <DialogTrigger asChild><Button variant="outline"><Upload className="mr-1 h-4 w-4" />Import CSV</Button></DialogTrigger>
@@ -324,14 +316,6 @@ export function JournalClient({ initialTrades, accounts, userId }: { initialTrad
         </CardContent>
       </Card>
 
-      {lastTrade && (
-        <PostTradeModal
-          open={postTradeOpen}
-          pnl={lastTrade.pnl}
-          symbol={lastTrade.symbol}
-          onDismiss={() => { setPostTradeOpen(false); setLastTrade(null); }}
-        />
-      )}
     </div>
   );
 }

@@ -75,43 +75,43 @@ export default async function DashboardPage() {
       {/* Stats grid — 3 cols on all sizes, auto font scaling */}
       <div className="mb-4 grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
         {/* Net P&L */}
-        <Card><CardContent className="p-2.5 md:p-4">
-          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Net P&L</div>
-          <div className={`text-sm sm:text-base md:text-2xl font-black leading-tight ${totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
+        <Card><CardContent className="p-3 md:p-4">
+          <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Net P&L</div>
+          <div className={`text-lg sm:text-xl md:text-2xl font-black leading-tight ${totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
             {fmtCompact(totalPnl, true)}
           </div>
           <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">{t.length} trades</div>
         </CardContent></Card>
 
         {/* Win Rate */}
-        <Card><CardContent className="p-2.5 md:p-4">
-          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Win Rate</div>
-          <div className="text-sm sm:text-base md:text-2xl font-black leading-tight text-blue-400">{winRate.toFixed(1)}%</div>
+        <Card><CardContent className="p-3 md:p-4">
+          <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Win Rate</div>
+          <div className="text-lg sm:text-xl md:text-2xl font-black leading-tight text-blue-400">{winRate.toFixed(1)}%</div>
           <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">{wins.length}W / {losses.length}L</div>
         </CardContent></Card>
 
         {/* Profit Factor */}
-        <Card><CardContent className="p-2.5 md:p-4">
-          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Profit Factor</div>
-          <div className={`text-sm sm:text-base md:text-2xl font-black leading-tight ${pf >= 1.5 ? "text-green-400" : pf >= 1 ? "text-amber-400" : "text-red-400"}`}>
+        <Card><CardContent className="p-3 md:p-4">
+          <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Profit Factor</div>
+          <div className={`text-lg sm:text-xl md:text-2xl font-black leading-tight ${pf >= 1.5 ? "text-green-400" : pf >= 1 ? "text-amber-400" : "text-red-400"}`}>
             {pf === 999 ? "∞" : pf.toFixed(2)}
           </div>
         </CardContent></Card>
 
         {/* Avg Win / Loss */}
-        <Card><CardContent className="p-2.5 md:p-4">
-          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Avg W / L</div>
+        <Card><CardContent className="p-3 md:p-4">
+          <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Avg W / L</div>
           <div className="flex items-baseline gap-0.5 flex-wrap">
-            <span className="text-xs sm:text-sm md:text-lg font-black text-green-400 leading-tight">{avgWin > 0 ? fmtCompact(avgWin) : "—"}</span>
+            <span className="text-base sm:text-lg md:text-xl font-black text-green-400 leading-tight">{avgWin > 0 ? fmtCompact(avgWin) : "—"}</span>
             <span className="text-muted-foreground text-[9px]">/</span>
-            <span className="text-xs sm:text-sm md:text-lg font-black text-red-400 leading-tight">{avgLoss > 0 ? fmtCompact(-avgLoss, true) : "—"}</span>
+            <span className="text-base sm:text-lg md:text-xl font-black text-red-400 leading-tight">{avgLoss > 0 ? fmtCompact(-avgLoss, true) : "—"}</span>
           </div>
           <div className="text-[9px] md:text-xs text-muted-foreground mt-0.5">per trade</div>
         </CardContent></Card>
 
         {/* Best Day % */}
-        <Card><CardContent className="p-2.5 md:p-4">
-          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best Day %</div>
+        <Card><CardContent className="p-3 md:p-4">
+          <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best Day %</div>
           <div className={`text-sm sm:text-base md:text-2xl font-black leading-tight ${bestDay && bestDay[1] >= 0 ? "text-green-400" : "text-red-400"}`}>
             {bestDayPct != null ? `${bestDayPct.toFixed(1)}%` : "—"}
           </div>
@@ -119,8 +119,8 @@ export default async function DashboardPage() {
         </CardContent></Card>
 
         {/* Most Profitable Day */}
-        <Card><CardContent className="p-2.5 md:p-4">
-          <div className="text-[9px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best DOW</div>
+        <Card><CardContent className="p-3 md:p-4">
+          <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best DOW</div>
           <div className="text-sm sm:text-base md:text-2xl font-black leading-tight text-primary">
             {mostProfitableDay ? mostProfitableDay[0].slice(0, 3) : "—"}
           </div>
