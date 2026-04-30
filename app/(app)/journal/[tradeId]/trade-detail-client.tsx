@@ -228,7 +228,7 @@ export function TradeDetailClient({ trade, adjacent }: { trade: Trade; adjacent?
           </div>
         </div>
         <div className="ml-auto text-right">
-          <div className={`text-4xl font-black ${isWin ? "text-green-400" : "text-red-400"}`}>
+          <div className={`text-3xl font-black md:text-4xl truncate ${isWin ? "text-green-400" : "text-red-400"}`}>
             {net >= 0 ? "+" : ""}{fmtMoney(Math.abs(net))}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">Net · ${trade.commission.toFixed(2)} fees</div>
@@ -240,8 +240,8 @@ export function TradeDetailClient({ trade, adjacent }: { trade: Trade; adjacent?
         {[
           { label: "Gross P&L",    value: fmtMoney(trade.pnl, true), color: trade.pnl >= 0 ? "text-green-500" : "text-red-500" },
           { label: "Net P&L",      value: fmtMoney(net, true),       color: net >= 0 ? "text-green-500" : "text-red-500" },
-          { label: "R-Multiple",   value: trade.r_multiple != null ? `${trade.r_multiple}R` : "—", color: (trade.r_multiple ?? 0) >= 1 ? "text-green-500" : (trade.r_multiple ?? 0) >= 0 ? "text-amber-500" : "text-red-500" },
-          { label: "Risk/Reward",  value: rr ? `1:${rr}` : "—",     color: "text-primary" },
+          { label: "R-Multiple",   value: trade.r_multiple != null ? `${trade.r_multiple}R` : "No stop set", color: trade.r_multiple == null ? "text-muted-foreground text-sm" : (trade.r_multiple ?? 0) >= 1 ? "text-green-500" : (trade.r_multiple ?? 0) >= 0 ? "text-amber-500" : "text-red-500" },
+          { label: "Risk/Reward",  value: rr ? `1:${rr}` : "No stop set", color: rr ? "text-primary" : "text-muted-foreground text-sm" },
           { label: "Contracts",    value: String(trade.contracts),   color: "text-foreground" },
           { label: "Per Contract", value: pnlPerContract != null ? fmtMoney(pnlPerContract, true) : "—", color: (pnlPerContract ?? 0) >= 0 ? "text-green-500" : "text-red-500" },
         ].map((s) => (

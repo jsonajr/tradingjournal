@@ -147,10 +147,10 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
             </div>
           </CardHeader>
           <CardContent>
-            <div className="mb-1 grid grid-cols-7 gap-1">
+            <div className="mb-2 grid grid-cols-7 gap-1.5">
               {DOW.map((d) => <div key={d} className="py-1 text-center text-[10px] font-semibold uppercase text-muted-foreground">{d}</div>)}
             </div>
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-1.5">
               {cells.map((c, i) => {
                 const dateStr = c.cur ? `${year}-${String(month + 1).padStart(2, "0")}-${String(c.day).padStart(2, "0")}` : "";
                 const e = dateStr ? entryByDate[dateStr] : null;
@@ -161,7 +161,7 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                 const fmtPnl = pnl != null ? `${pnl >= 0 ? "+" : "-"}$${Math.abs(pnl).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : null;
                 return (
                   <button key={i} onClick={() => c.cur && openEntry(dateStr)} disabled={!c.cur}
-                    className={cn("flex min-h-[80px] flex-col rounded-md border p-1.5 text-left transition-colors md:min-h-[100px]",
+                    className={cn("flex min-h-[80px] flex-col rounded-md border-2 p-1.5 text-left transition-colors md:min-h-[100px]",
                       c.cur ? "hover:border-primary cursor-pointer" : "opacity-20 cursor-default",
                       isToday && "border-primary ring-1 ring-primary",
                       pnl != null && pnl > 0 && "border-green-500/30",

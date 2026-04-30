@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, List, PlusCircle, CalendarDays, Settings, Shield, DollarSign, BookOpen } from "lucide-react";
+import { LayoutDashboard, List, PlusCircle, CalendarDays, Settings, Shield, DollarSign, BookOpen, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/auth";
 
@@ -13,6 +13,7 @@ export function MobileTabBar({ profile }: { profile: Profile }) {
     { href: "/trades",           label: "Trades",     icon: List },
     { href: "/trades/new",       label: "New",        icon: PlusCircle },
     { href: "/journal/calendar", label: "Calendar",   icon: CalendarDays },
+    { href: "/insights",         label: "Insights",   icon: BarChart2 },
     { href: "/strategies",       label: "Strategies", icon: BookOpen },
     ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
     { href: "/settings",         label: "Settings",   icon: Settings },
