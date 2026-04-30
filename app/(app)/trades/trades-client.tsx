@@ -28,7 +28,7 @@ type Trade = {
   pnl: number; commission: number; r_multiple: number | null;
   setup: string | null; session: string | null; grade: string | null;
   notes: string | null;
-  accounts: { name: string } | null;
+  accounts: { name: string } | { name: string }[] | null;
   account_id: string | null;
 };
 
@@ -232,10 +232,11 @@ export function TradesClient({ initialTrades, accounts }: { initialTrades: Trade
   }
 
   function handleSaved(updated: Trade) {
+    const matchedAccount = accounts.find((a) => a.id === updated.account_id);
     setTrades((prev) =>
       prev.map((t) =>
         t.id === updated.id
-          ? { ...updated, accounts: accounts.find((a) => a.id === updated.account_id) ? { name: accounts.find((a) => a.id === updated.account_id)!.name } : null }
+          ? { ...updated, accounts: matchedAccount ? { name: matchedAccount.name } : null }
           : t
       )
     );
@@ -315,7 +316,7 @@ export function TradesClient({ initialTrades, accounts }: { initialTrades: Trade
                       </button>
                     </TableCell>
                     <TableCell className="text-sm">{t.trade_date}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{t.accounts?.name ?? "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{Array.isArray(t.accounts) ? t.accounts[0]?.name : t.accounts?.name ?? "—"}</TableCell>
                     <TableCell className="text-sm font-bold">{t.symbol}</TableCell>
                     <TableCell>
                       <Badge className={t.direction === "Long" ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}>
