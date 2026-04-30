@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Trophy } from "lucide-react";
 
 type Expense = { id: string; date: string; type: string; firm: string | null; amount: number; note: string | null };
 type Payout  = { id: string; date: string; firm: string | null; amount: number; note: string | null };
@@ -31,6 +31,8 @@ export function EvalClient({
   const [expDialog, setExpDialog] = useState(false);
   const [payDialog, setPayDialog] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [congrats, setCongrats] = useState<{ amount: number; firm: string } | null>(null);
+  const congratsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const today = new Date().toISOString().split("T")[0];
   const [expForm, setExpForm] = useState({ date: today, type: "Evaluation Fee", firm: "", amount: "", note: "" });
   const [payForm, setPayForm] = useState({ date: today, firm: "", amount: "", note: "" });
@@ -72,6 +74,10 @@ export function EvalClient({
       setPayDialog(false);
       setPayForm({ date: today, firm: "", amount: "", note: "" });
       toast.success("Payout saved!");
+      // Show congrats banner
+      if (congratsTimer.current) clearTimeout(congratsTimer.current);
+      setCongrats({ amount: amt, firm: payForm.firm || "your firm" });
+      congratsTimer.current = setTimeout(() => setCongrats(null), 5000);
     } finally {
       setSaving(false);
     }
@@ -120,6 +126,24 @@ export function EvalClient({
 
   return (
     <div className="p-4 md:p-8">
+
+      {/* 🏆 Congrats Banner */}
+      <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-out ${
+        congrats ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"
+      }`}>
+        <div className="flex items-center gap-3 rounded-full border-2 border-yellow-400 bg-gradient-to-r from-yellow-950 via-yellow-900 to-yellow-950 px-6 py-3 shadow-2xl shadow-yellow-500/30 cursor-pointer"
+          onClick={() => setCongrats(null)}>
+          <Trophy className="h-5 w-5 text-yellow-400 shrink-0" />
+          <div className="text-center">
+            <span className="text-yellow-300 font-black text-sm tracking-wide">PAYOUT RECEIVED 🎉</span>
+            <span className="mx-2 text-yellow-500">·</span>
+            <span className="text-yellow-400 font-black text-sm">{congrats ? fmt(congrats.amount) : ""}</span>
+            <span className="mx-2 text-yellow-600 text-xs">from</span>
+            <span className="text-yellow-300 text-xs font-semibold">{congrats?.firm}</span>
+          </div>
+          <Trophy className="h-5 w-5 text-yellow-400 shrink-0" />
+        </div>
+      </div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold md:text-3xl">Eval Expenses & Payouts</h1>
@@ -157,11 +181,15 @@ export function EvalClient({
             <span className="text-sm font-semibold text-red-500">{fmt(totalExp)}</span>
           </CardHeader>
           <CardContent className="p-0">
+            <div className="max-h-72 overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead><TableHead>Firm</TableHead>
-                  <TableHead>Type</TableHead><TableHead>Amount</TableHead><TableHead></TableHead>
+                  <TableHead className="sticky top-0 bg-card z-10">Date</TableHead>
+                  <TableHead className="sticky top-0 bg-card z-10">Firm</TableHead>
+                  <TableHead className="sticky top-0 bg-card z-10">Type</TableHead>
+                  <TableHead className="sticky top-0 bg-card z-10">Amount</TableHead>
+                  <TableHead className="sticky top-0 bg-card z-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -183,6 +211,7 @@ export function EvalClient({
                 )}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
 
@@ -193,11 +222,15 @@ export function EvalClient({
             <span className="text-sm font-semibold text-green-500">{fmt(totalPay)}</span>
           </CardHeader>
           <CardContent className="p-0">
+            <div className="max-h-72 overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead><TableHead>Firm</TableHead>
-                  <TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
+                  <TableHead className="sticky top-0 bg-card z-10">Date</TableHead>
+                  <TableHead className="sticky top-0 bg-card z-10">Firm</TableHead>
+                  <TableHead className="sticky top-0 bg-card z-10">Amount</TableHead>
+                  <TableHead className="sticky top-0 bg-card z-10">Status</TableHead>
+                  <TableHead className="sticky top-0 bg-card z-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -219,6 +252,7 @@ export function EvalClient({
                 )}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
