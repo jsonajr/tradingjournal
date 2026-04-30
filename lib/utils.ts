@@ -31,3 +31,12 @@ export function calcRMultiple(entry: number, exit: number, stop: number, dir: "L
   const gain = dir === "Long" ? exit - entry : entry - exit;
   return parseFloat((gain / risk).toFixed(2));
 }
+
+export function fmtDateTz(d: string | Date | null | undefined, tz?: string) {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: tz || undefined,
+  });
+}

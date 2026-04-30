@@ -8,6 +8,6 @@ const QuickTradeButtons = dynamic(
 
 type Account = { id: string; name: string };
 
-export function QuickTradeWrapper({ accounts, userId }: { accounts: Account[]; userId: string }) {
-  return <QuickTradeButtons accounts={accounts} userId={userId} />;
+export function QuickTradeWrapper({ accounts, userId, popupEnabled }: { accounts: Account[]; userId: string; popupEnabled?: boolean }) {
+  return <QuickTradeButtons accounts={accounts} userId={userId} popupEnabled={popupEnabled} />;
 }

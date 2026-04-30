@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PostTradeModal } from "@/components/journal/post-trade-modal";
+import { PostTradeReflection } from "@/components/journal/post-trade-reflection";
 import { TrendingUp, TrendingDown, Upload, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -24,7 +24,7 @@ const PLATFORM_INFO: Record<string, string> = {
 
 type Account = { id: string; name: string };
 
-export function QuickTradeButtons({ accounts, userId }: { accounts: Account[]; userId: string }) {
+export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { accounts: Account[]; userId: string; popupEnabled?: boolean }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
   const [open, setOpen] = useState(false);
@@ -32,7 +32,7 @@ export function QuickTradeButtons({ accounts, userId }: { accounts: Account[]; u
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [postTradeOpen, setPostTradeOpen] = useState(false);
-  const [lastTrade, setLastTrade] = useState<{ pnl: number; symbol: string } | null>(null);
+  const [lastTrade, setLastTrade] = useState<{ pnl: number; symbol: string; id?: string } | null>(null);
 
   // Manual form
   const [form, setForm] = useState({
@@ -77,10 +77,11 @@ export function QuickTradeButtons({ accounts, userId }: { accounts: Account[]; u
     });
     setSaving(false);
     if (!res.ok) { const d = await res.json(); toast.error(d.error ?? "Failed"); return; }
+    const saved = await res.json();
     const pnl = parseFloat(form.pnl) || 0;
-    setLastTrade({ pnl, symbol: form.symbol });
+    setLastTrade({ pnl, symbol: form.symbol, id: saved?.trade?.id });
     setOpen(false);
-    setPostTradeOpen(true);
+    if (popupEnabled) setPostTradeOpen(true);
     router.refresh();
   }
 
@@ -255,10 +256,11 @@ export function QuickTradeButtons({ accounts, userId }: { accounts: Account[]; u
       </Dialog>
 
       {lastTrade && (
-        <PostTradeModal
+        <PostTradeReflection
           open={postTradeOpen}
           pnl={lastTrade.pnl}
           symbol={lastTrade.symbol}
+          tradeId={lastTrade.id}
           onDismiss={() => { setPostTradeOpen(false); setLastTrade(null); }}
         />
       )}

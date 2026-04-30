@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
 
 type Account = { id: string; user_id: string; name: string; type: string; firm: string | null; size: string | null; platform: string | null; status: string | null; balance: string | null; start_date: string | null; notes: string | null };
-type UserSettings = { user_id: string; timezone: string; default_currency: string; show_commissions: boolean; accent_color: string; notification_email: boolean; notification_in_app: boolean } | null;
+type UserSettings = { user_id: string; timezone: string; default_currency: string; show_commissions: boolean; accent_color: string; notification_email: boolean; notification_in_app: boolean; post_trade_popup_enabled: boolean } | null;
 type Subscription = { plan: string; status: string; current_period_end: string | null; cancel_at_period_end: boolean } | null;
 
 export function SettingsClient({ profile, accounts: initialAccounts, settings, subscription }: { profile: Profile; accounts: Account[]; settings: UserSettings; subscription: Subscription }) {
@@ -38,6 +38,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
   // Settings state
   const [tz, setTz] = useState(settings?.timezone ?? "America/New_York");
   const [currency, setCurrency] = useState(settings?.default_currency ?? "USD");
+  const [postTradePopup, setPostTradePopup] = useState(settings?.post_trade_popup_enabled ?? true);
 
   async function saveProfile() {
     setSavingProfile(true);
@@ -49,7 +50,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
   }
 
   async function savePreferences() {
-    const { error } = await supabase.from("user_settings").upsert({ user_id: profile.id, timezone: tz, default_currency: currency });
+    const { error } = await supabase.from("user_settings").upsert({ user_id: profile.id, timezone: tz, default_currency: currency, post_trade_popup_enabled: postTradePopup });
     if (error) { toast.error(error.message); return; }
     toast.success("Preferences saved");
     router.refresh();
@@ -209,12 +210,69 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
                 <Label>Timezone</Label>
                 <Select value={tz} onValueChange={setTz}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="America/New_York">Eastern (ET)</SelectItem>
-                    <SelectItem value="America/Chicago">Central (CT)</SelectItem>
-                    <SelectItem value="America/Los_Angeles">Pacific (PT)</SelectItem>
-                    <SelectItem value="Europe/London">London (GMT)</SelectItem>
-                    <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="Pacific/Midway">UTC-11 – Midway Island</SelectItem>
+                    <SelectItem value="Pacific/Honolulu">UTC-10 – Hawaii (HST)</SelectItem>
+                    <SelectItem value="America/Anchorage">UTC-9 – Alaska (AKST)</SelectItem>
+                    <SelectItem value="America/Los_Angeles">UTC-8 – Pacific (PT)</SelectItem>
+                    <SelectItem value="America/Denver">UTC-7 – Mountain (MT)</SelectItem>
+                    <SelectItem value="America/Phoenix">UTC-7 – Arizona (no DST)</SelectItem>
+                    <SelectItem value="America/Chicago">UTC-6 – Central (CT)</SelectItem>
+                    <SelectItem value="America/New_York">UTC-5 – Eastern (ET)</SelectItem>
+                    <SelectItem value="America/Toronto">UTC-5 – Toronto</SelectItem>
+                    <SelectItem value="America/Halifax">UTC-4 – Atlantic (AT)</SelectItem>
+                    <SelectItem value="America/Sao_Paulo">UTC-3 – São Paulo</SelectItem>
+                    <SelectItem value="America/Argentina/Buenos_Aires">UTC-3 – Buenos Aires</SelectItem>
+                    <SelectItem value="Atlantic/Azores">UTC-1 – Azores</SelectItem>
+                    <SelectItem value="Europe/London">UTC+0 – London (GMT/BST)</SelectItem>
+                    <SelectItem value="Europe/Lisbon">UTC+0 – Lisbon</SelectItem>
+                    <SelectItem value="Africa/Casablanca">UTC+0 – Casablanca</SelectItem>
+                    <SelectItem value="Europe/Paris">UTC+1 – Paris / Berlin (CET)</SelectItem>
+                    <SelectItem value="Europe/Amsterdam">UTC+1 – Amsterdam</SelectItem>
+                    <SelectItem value="Europe/Madrid">UTC+1 – Madrid</SelectItem>
+                    <SelectItem value="Europe/Rome">UTC+1 – Rome</SelectItem>
+                    <SelectItem value="Africa/Lagos">UTC+1 – Lagos</SelectItem>
+                    <SelectItem value="Europe/Helsinki">UTC+2 – Helsinki (EET)</SelectItem>
+                    <SelectItem value="Europe/Athens">UTC+2 – Athens</SelectItem>
+                    <SelectItem value="Europe/Bucharest">UTC+2 – Bucharest</SelectItem>
+                    <SelectItem value="Africa/Cairo">UTC+2 – Cairo</SelectItem>
+                    <SelectItem value="Africa/Johannesburg">UTC+2 – Johannesburg</SelectItem>
+                    <SelectItem value="Europe/Istanbul">UTC+3 – Istanbul</SelectItem>
+                    <SelectItem value="Asia/Riyadh">UTC+3 – Riyadh</SelectItem>
+                    <SelectItem value="Africa/Nairobi">UTC+3 – Nairobi</SelectItem>
+                    <SelectItem value="Europe/Moscow">UTC+3 – Moscow</SelectItem>
+                    <SelectItem value="Asia/Tehran">UTC+3:30 – Tehran</SelectItem>
+                    <SelectItem value="Asia/Dubai">UTC+4 – Dubai</SelectItem>
+                    <SelectItem value="Asia/Baku">UTC+4 – Baku</SelectItem>
+                    <SelectItem value="Asia/Kabul">UTC+4:30 – Kabul</SelectItem>
+                    <SelectItem value="Asia/Karachi">UTC+5 – Karachi (PKT)</SelectItem>
+                    <SelectItem value="Asia/Tashkent">UTC+5 – Tashkent</SelectItem>
+                    <SelectItem value="Asia/Kolkata">UTC+5:30 – India (IST)</SelectItem>
+                    <SelectItem value="Asia/Colombo">UTC+5:30 – Sri Lanka</SelectItem>
+                    <SelectItem value="Asia/Kathmandu">UTC+5:45 – Kathmandu</SelectItem>
+                    <SelectItem value="Asia/Dhaka">UTC+6 – Dhaka</SelectItem>
+                    <SelectItem value="Asia/Almaty">UTC+6 – Almaty</SelectItem>
+                    <SelectItem value="Asia/Rangoon">UTC+6:30 – Yangon</SelectItem>
+                    <SelectItem value="Asia/Bangkok">UTC+7 – Bangkok (ICT)</SelectItem>
+                    <SelectItem value="Asia/Jakarta">UTC+7 – Jakarta</SelectItem>
+                    <SelectItem value="Asia/Ho_Chi_Minh">UTC+7 – Ho Chi Minh</SelectItem>
+                    <SelectItem value="Asia/Shanghai">UTC+8 – China (CST)</SelectItem>
+                    <SelectItem value="Asia/Hong_Kong">UTC+8 – Hong Kong</SelectItem>
+                    <SelectItem value="Asia/Singapore">UTC+8 – Singapore</SelectItem>
+                    <SelectItem value="Asia/Taipei">UTC+8 – Taipei</SelectItem>
+                    <SelectItem value="Australia/Perth">UTC+8 – Perth</SelectItem>
+                    <SelectItem value="Asia/Tokyo">UTC+9 – Tokyo (JST)</SelectItem>
+                    <SelectItem value="Asia/Seoul">UTC+9 – Seoul</SelectItem>
+                    <SelectItem value="Australia/Adelaide">UTC+9:30 – Adelaide</SelectItem>
+                    <SelectItem value="Australia/Darwin">UTC+9:30 – Darwin</SelectItem>
+                    <SelectItem value="Australia/Sydney">UTC+10 – Sydney (AEST)</SelectItem>
+                    <SelectItem value="Australia/Brisbane">UTC+10 – Brisbane</SelectItem>
+                    <SelectItem value="Pacific/Guam">UTC+10 – Guam</SelectItem>
+                    <SelectItem value="Australia/Lord_Howe">UTC+10:30 – Lord Howe</SelectItem>
+                    <SelectItem value="Pacific/Noumea">UTC+11 – Noumea</SelectItem>
+                    <SelectItem value="Pacific/Auckland">UTC+12 – Auckland (NZST)</SelectItem>
+                    <SelectItem value="Pacific/Fiji">UTC+12 – Fiji</SelectItem>
+                    <SelectItem value="Pacific/Tongatapu">UTC+13 – Tonga</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -230,6 +288,24 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
                 </Select>
               </div>
             </div>
+            <div className="col-span-1 md:col-span-2 flex items-center justify-between rounded-lg border p-4">
+                <div>
+                  <div className="text-sm font-medium">Post-Trade Reflection Popup</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Show a reflection checklist after every logged trade</div>
+                </div>
+                <button
+                  onClick={() => setPostTradePopup((v) => !v)}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors",
+                    postTradePopup ? "bg-primary" : "bg-muted"
+                  )}
+                >
+                  <span className={cn(
+                    "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform",
+                    postTradePopup ? "translate-x-5" : "translate-x-0"
+                  )} />
+                </button>
+              </div>
             <Button onClick={savePreferences}>Save Preferences</Button>
           </CardContent>
         </Card>
@@ -298,7 +374,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
         <ThemePanel profile={profile} />
       )}
 
-      {tab === "sessions" && <SessionsTab />}
+      {tab === "sessions" && <SessionsTab timezone={tz} />}
 
       {/* Account dialog */}
       <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
@@ -386,21 +462,17 @@ function ThemePanel({ profile: _profile }: { profile: Profile }) {
     try { localStorage.setItem("tj_accent", hex); } catch {}
   }
 
-  function setFontSize(type: "desktop" | "mobile", size: string) {
-    const key = type === "desktop" ? "tj_fontsize_desktop" : "tj_fontsize_mobile";
-    try { localStorage.setItem(key, size); } catch {}
-    const isMobile = window.innerWidth < 768;
-    if ((type === "mobile" && isMobile) || (type === "desktop" && !isMobile)) {
+  // Auto font size based on viewport
+  useEffect(() => {
+    function applyAutoFont() {
+      const w = window.innerWidth;
+      const size = w < 375 ? "13px" : w < 768 ? "15px" : w < 1280 ? "15px" : "16px";
       document.documentElement.style.fontSize = size;
     }
-  }
-
-  const SIZE_OPTS = [
-    { label: "Small", size: "13px" },
-    { label: "Default", size: "16px" },
-    { label: "Large", size: "18px" },
-    { label: "XL", size: "20px" },
-  ];
+    applyAutoFont();
+    window.addEventListener("resize", applyAutoFont);
+    return () => window.removeEventListener("resize", applyAutoFont);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -419,35 +491,6 @@ function ThemePanel({ profile: _profile }: { profile: Profile }) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Palette className="h-4 w-4" />Desktop Text Size</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground mb-3">Adjust base font size for desktop. Applied immediately.</p>
-          <div className="flex gap-2 flex-wrap">
-            {SIZE_OPTS.map((o) => (
-              <button key={o.size} onClick={() => setFontSize("desktop", o.size)}
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Palette className="h-4 w-4" />Mobile Text Size</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground mb-3">Adjust base font size for mobile. Applied immediately.</p>
-          <div className="flex gap-2 flex-wrap">
-            {SIZE_OPTS.map((o) => (
-              <button key={o.size} onClick={() => setFontSize("mobile", o.size)}
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

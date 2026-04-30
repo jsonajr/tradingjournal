@@ -16,10 +16,11 @@ export default async function DashboardPage() {
   const { user, profile } = await requireRole(["user", "moderator", "admin"]);
   const sb = await createClient();
 
-  const [{ data: trades }, { data: accounts }, { data: recentJournal }] = await Promise.all([
+  const [{ data: trades }, { data: accounts }, { data: recentJournal }, { data: userSettings }] = await Promise.all([
     sb.from("trades").select("*").eq("user_id", user.id).order("trade_date", { ascending: false }).limit(500),
     sb.from("accounts").select("id, name").eq("user_id", user.id),
     sb.from("journal_entries").select("*").eq("user_id", user.id).order("entry_date", { ascending: false }).limit(3),
+    sb.from("user_settings").select("post_trade_popup_enabled").eq("user_id", user.id).maybeSingle(),
   ]);
 
   const t = trades ?? [];
@@ -67,7 +68,7 @@ export default async function DashboardPage() {
           <h1 className="text-xl font-bold md:text-3xl">Welcome back{profile.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}</h1>
           <p className="text-xs text-muted-foreground md:text-sm">Your trading overview</p>
         </div>
-        <QuickTradeWrapper accounts={accounts ?? []} userId={user.id} />
+        <QuickTradeWrapper accounts={accounts ?? []} userId={user.id} popupEnabled={userSettings?.post_trade_popup_enabled ?? true} />
       </div>
 
       {/* Stats grid — 3 cols on all sizes, auto font scaling */}

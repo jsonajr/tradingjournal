@@ -45,7 +45,7 @@ function parseOS(ua?: string) {
   return "";
 }
 
-export function SessionsTab() {
+export function SessionsTab({ timezone }: { timezone?: string }) {
   const router = useRouter();
   const supabase = createClient();
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -122,7 +122,7 @@ export function SessionsTab() {
                       {browser}{os ? ` · ${os}` : ""}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Last active: {new Date(s.updated_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+                      Last active: {new Date(s.updated_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: timezone || undefined })}
                     </div>
                   </div>
                 </div>

@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fmtDate, fmtMoney } from "@/lib/utils";
+import { fmtDate, fmtDateTz, fmtMoney } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import { UserActions } from "./user-actions";
 
@@ -16,10 +16,17 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   const { data: user } = await sb.from("profiles").select("*").eq("id", id).single();
   if (!user) notFound();
 
-  const [{ data: trades }, { data: cooldowns }, { data: subscription }] = await Promise.all([
+  // Get current admin's timezone preference
+  const { requireRole } = await import("@/lib/auth");
+  const { user: adminUser } = await requireRole(["admin", "moderator"]);
+  const { data: adminSettings } = await sb.from("user_settings").select("timezone").eq("user_id", adminUser.id).maybeSingle();
+  const tz = adminSettings?.timezone || "America/New_York";
+
+  const [{ data: trades }, { data: cooldowns }, { data: subscription }, { data: reflections }] = await Promise.all([
     sb.from("trades").select("*").eq("user_id", id).order("trade_date", { ascending: false }).limit(20),
     sb.from("cooldowns").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(5),
     sb.from("subscriptions").select("*").eq("user_id", id).maybeSingle(),
+    sb.from("post_trade_reflections").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(20),
   ]);
 
   const wins = (trades ?? []).filter((t) => t.pnl > 0).length;
@@ -53,7 +60,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <Stat label="Total Trades" value={trades?.length ?? 0} />
         <Stat label="Net P&L" value={fmtMoney(totalPnl)} accent={totalPnl >= 0 ? "text-green-500" : "text-red-500"} />
         <Stat label="Wins / Losses" value={`${wins} / ${losses}`} />
-        <Stat label="Last Seen" value={fmtDate(user.last_seen)} small />
+        <Stat label="Last Seen" value={fmtDateTz(user.last_seen, tz)} small />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -84,8 +91,8 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               <TableBody>
                 {(cooldowns ?? []).map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="text-xs">{fmtDate(c.starts_at)}</TableCell>
-                    <TableCell className="text-xs">{fmtDate(c.ends_at)}</TableCell>
+                    <TableCell className="text-xs">{fmtDateTz(c.starts_at, tz)}</TableCell>
+                    <TableCell className="text-xs">{fmtDateTz(c.ends_at, tz)}</TableCell>
                     <TableCell className="text-xs">{c.reason ?? "—"}</TableCell>
                     <TableCell>{c.is_active && new Date(c.ends_at) > new Date() ? <Badge variant="warning">Active</Badge> : <Badge variant="outline">Expired</Badge>}</TableCell>
                   </TableRow>
@@ -96,7 +103,56 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           </CardContent>
         </Card>
       </div>
+
+      {/* Post-Trade Reflections */}
+      {reflections && reflections.length > 0 && (
+        <div className="mt-4">
+          <Card>
+            <CardHeader><CardTitle className="text-sm">Post-Trade Reflections</CardTitle></CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Result</TableHead>
+                    <TableHead>Followed Setup</TableHead>
+                    <TableHead>Emotional</TableHead>
+                    <TableHead>Revenge</TableHead>
+                    <TableHead>Needs Break</TableHead>
+                    <TableHead>Exec Plan</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reflections.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="text-xs">{fmtDateTz(r.created_at, tz)}</TableCell>
+                      <TableCell>
+                        <Badge variant={r.trade_result === "win" ? "success" : "destructive"}>
+                          {r.trade_result}
+                        </Badge>
+                      </TableCell>
+                      <TableCell><YesNo val={r.followed_setup} /></TableCell>
+                      <TableCell><YesNo val={r.emotional_trade} warn /></TableCell>
+                      <TableCell><YesNo val={r.revenge_trade} warn /></TableCell>
+                      <TableCell><YesNo val={r.needs_break} warn /></TableCell>
+                      <TableCell><YesNo val={r.executed_plan} /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
+  );
+}
+
+function YesNo({ val, warn }: { val: boolean; warn?: boolean }) {
+  return (
+    <Badge variant={val ? (warn ? "destructive" : "success") : "outline"}>
+      {val ? "Yes" : "No"}
+    </Badge>
   );
 }
 
