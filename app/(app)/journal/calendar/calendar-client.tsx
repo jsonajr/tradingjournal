@@ -234,13 +234,13 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                         <div className="flex-1 flex flex-col items-center justify-center gap-0.5 -mt-1">
                           <span className={cn(
                             "font-black leading-none tabular-nums text-center",
-                            "text-[10px] sm:text-[11px] md:text-xs",
+                            "text-[10px] sm:text-[11px] md:text-sm",
                             pnl >= 0 ? "text-green-500" : "text-red-500"
                           )}>
                             {fmtPnlCents(pnl)}
                           </span>
                           {tradeCount != null && (
-                            <span className="text-[8px] md:text-[9px] text-muted-foreground/50 leading-none">
+                            <span className="text-[8px] md:text-[11px] text-muted-foreground/50 leading-none">
                               {tradeCount} {tradeCount === 1 ? "trade" : "trades"}
                             </span>
                           )}
