@@ -21,6 +21,7 @@ type Entry = {
   rules_followed: boolean | null; improvement: string | null; tags: string[] | null;
 };
 type TradeMini = { trade_date: string; pnl: number; commission: number };
+type DayStats = { pnl: number; count: number };
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -56,7 +57,15 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
   const [editorOpen, setEditorOpen] = useState(false);
 
   const entryByDate = useMemo(() => { const m: Record<string, Entry> = {}; entries.forEach((e) => { m[e.entry_date] = e; }); return m; }, [entries]);
-  const pnlByDate = useMemo(() => { const m: Record<string, number> = {}; trades.forEach((t) => { m[t.trade_date] = (m[t.trade_date] ?? 0) + (t.pnl - t.commission); }); return m; }, [trades]);
+  const statsByDate = useMemo(() => {
+    const m: Record<string, DayStats> = {};
+    trades.forEach((t) => {
+      if (!m[t.trade_date]) m[t.trade_date] = { pnl: 0, count: 0 };
+      m[t.trade_date].pnl += t.pnl - t.commission;
+      m[t.trade_date].count += 1;
+    });
+    return m;
+  }, [trades]);
   const sortedList = useMemo(() => [...entries].sort((a, b) => b.entry_date.localeCompare(a.entry_date)), [entries]);
 
   const streak = useMemo(() => calcStreak(entries), [entries]);
@@ -154,7 +163,9 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
               {cells.map((c, i) => {
                 const dateStr = c.cur ? `${year}-${String(month + 1).padStart(2, "0")}-${String(c.day).padStart(2, "0")}` : "";
                 const e = dateStr ? entryByDate[dateStr] : null;
-                const pnl = dateStr ? pnlByDate[dateStr] : null;
+                const stats = dateStr ? statsByDate[dateStr] : null;
+                const pnl = stats?.pnl ?? null;
+                const tradeCount = stats?.count ?? null;
                 const isToday = dateStr === today;
                 const moodColor = e?.mood === "great" ? "bg-green-500/20 text-green-600" : e?.mood === "good" ? "bg-blue-500/15 text-blue-500" : e?.mood === "bad" || e?.mood === "terrible" ? "bg-red-500/15 text-red-500" : "bg-amber-500/15 text-amber-600";
                 const dayBg = pnl == null ? "" : pnl > 0 ? "bg-green-500/10" : pnl < 0 ? "bg-red-500/10" : "bg-zinc-500/10";
@@ -170,7 +181,12 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                     <div className={cn("text-[11px] font-semibold mb-0.5", isToday && "text-primary")}>{c.day}</div>
                     {e && <div className={cn("rounded px-1 py-0.5 text-[8px] font-semibold mb-0.5 truncate", moodColor)}>{e.bias ? `${e.bias.slice(0,1)} · ` : ""}{e.title?.slice(0, 12) || "Entry"}</div>}
                     {fmtPnl && dateStr && (
-                      <div className={cn("mt-auto text-sm font-black leading-tight", pnl! >= 0 ? "text-green-500" : "text-red-500")}>{fmtPnl}</div>
+                      <div className="mt-auto">
+                        <div className={cn("text-base font-black leading-tight md:text-lg", pnl! >= 0 ? "text-green-500" : "text-red-500")}>{fmtPnl}</div>
+                        {tradeCount != null && (
+                          <div className="text-[9px] font-medium text-muted-foreground/60 leading-tight">{tradeCount} trade{tradeCount !== 1 ? "s" : ""}</div>
+                        )}
+                      </div>
                     )}
                   </button>
                 );
