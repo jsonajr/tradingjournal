@@ -132,57 +132,61 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
       </div>
 
       {view === "cal" && (
-        <div className="flex gap-4 items-start">
+        <div className="flex flex-col gap-4 max-w-3xl mx-auto">
 
-          {/* Left sidebar stats — stacked vertically */}
-          <div className="hidden md:flex flex-col gap-3 w-44 shrink-0">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Flame className="h-5 w-5 text-amber-500 mx-auto mb-2" />
-                <div className="text-3xl font-black text-amber-500">{streak}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">day streak</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <BookOpen className="h-5 w-5 text-primary mx-auto mb-2" />
-                <div className="text-3xl font-black text-primary">{daysJournaled}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">total journaled</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <CalendarDays className="h-5 w-5 text-blue-500 mx-auto mb-2" />
-                <div className="text-3xl font-black text-blue-500">{thisMonthEntries}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">this month</div>
-              </CardContent>
-            </Card>
+          {/* Top stats bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* Monthly PnL */}
+            {(() => {
+              const prefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+              const monthDays = Object.entries(statsByDate).filter(([d]) => d.startsWith(prefix));
+              const monthPnl = monthDays.reduce((s, [, v]) => s + v.pnl, 0);
+              const winDays = monthDays.filter(([, v]) => v.pnl > 0).length;
+              const lossDays = monthDays.filter(([, v]) => v.pnl < 0).length;
+              const tradedDays = monthDays.length;
+              const winRate = tradedDays > 0 ? Math.round((winDays / tradedDays) * 100) : null;
+              const bestDay = monthDays.length > 0 ? Math.max(...monthDays.map(([, v]) => v.pnl)) : null;
+              const worstDay = monthDays.length > 0 ? Math.min(...monthDays.map(([, v]) => v.pnl)) : null;
+              return (<>
+                <Card>
+                  <CardContent className="p-3">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Month P&amp;L</div>
+                    <div className={cn("text-xl font-black tabular-nums", monthPnl >= 0 ? "text-green-500" : "text-red-500")}>
+                      {fmtPnlCents(monthPnl)}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{winDays}W · {lossDays}L</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-3">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Win Rate</div>
+                    <div className="text-xl font-black text-primary">{winRate != null ? `${winRate}%` : "—"}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{tradedDays} trading days</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-3">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Best Day</div>
+                    <div className="text-xl font-black text-green-500">{bestDay != null ? fmtPnlCents(bestDay) : "—"}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1"><Flame className="h-3 w-3 text-amber-500" />{streak} day streak</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-3">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Worst Day</div>
+                    <div className="text-xl font-black text-red-500">{worstDay != null ? fmtPnlCents(worstDay) : "—"}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1"><BookOpen className="h-3 w-3 text-primary" />{thisMonthEntries} journaled</div>
+                  </CardContent>
+                </Card>
+              </>);
+            })()}
           </div>
 
-          {/* Mobile stats row — above calendar */}
-          <div className="flex md:hidden w-full mb-3 gap-2">
-            <Card className="flex-1"><CardContent className="p-3 text-center">
-              <Flame className="h-4 w-4 text-amber-500 mx-auto mb-1" />
-              <div className="text-xl font-black text-amber-500">{streak}</div>
-              <div className="text-[10px] text-muted-foreground">Streak</div>
-            </CardContent></Card>
-            <Card className="flex-1"><CardContent className="p-3 text-center">
-              <BookOpen className="h-4 w-4 text-primary mx-auto mb-1" />
-              <div className="text-xl font-black text-primary">{daysJournaled}</div>
-              <div className="text-[10px] text-muted-foreground">Journaled</div>
-            </CardContent></Card>
-            <Card className="flex-1"><CardContent className="p-3 text-center">
-              <CalendarDays className="h-4 w-4 text-blue-500 mx-auto mb-1" />
-              <div className="text-xl font-black text-blue-500">{thisMonthEntries}</div>
-              <div className="text-[10px] text-muted-foreground">This Month</div>
-            </CardContent></Card>
-          </div>
-
-          {/* Calendar */}
-          <Card className="flex-1 min-w-0">
-            <CardHeader>
+          {/* Calendar — max-width constrained so aspect-square stays compact */}
+          <Card>
+            <CardHeader className="pb-2 pt-4 px-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">{MONTHS[month]} {year}</CardTitle>
+                <CardTitle className="text-base font-bold">{MONTHS[month]} {year}</CardTitle>
                 <div className="flex gap-1">
                   <Button size="icon" variant="ghost" onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); }}><ChevronLeft className="h-4 w-4" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => { setYear(new Date().getFullYear()); setMonth(new Date().getMonth()); }}>Today</Button>
@@ -190,9 +194,9 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="px-2 pb-3">
+            <CardContent className="px-3 pb-4">
               <div className="mb-1 grid grid-cols-7 gap-1">
-                {DOW.map((d) => <div key={d} className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{d}</div>)}
+                {DOW.map((d) => <div key={d} className="py-1 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{d}</div>)}
               </div>
               <div className="grid grid-cols-7 gap-1">
                 {cells.map((c, i) => {
@@ -202,51 +206,46 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
                   const pnl = stats?.pnl ?? null;
                   const tradeCount = stats?.count ?? null;
                   const isToday = dateStr === today;
-                  const dayBg = pnl == null ? "" : pnl > 0 ? "bg-green-500/10" : pnl < 0 ? "bg-red-500/10" : "bg-zinc-500/10";
+                  const dayBg = pnl == null ? "" : pnl > 0 ? "bg-green-500/10" : pnl < 0 ? "bg-red-500/10" : "";
                   return (
                     <button key={i} onClick={() => c.cur && openEntry(dateStr)} disabled={!c.cur}
                       className={cn(
-                        "relative flex flex-col items-center justify-center rounded-lg border-2 text-left transition-all overflow-hidden",
-                        "w-full h-16 md:h-20",
-                        c.cur ? "hover:border-primary hover:scale-[1.03] cursor-pointer" : "opacity-15 cursor-default",
+                        "relative aspect-square w-full flex flex-col rounded-lg border-2 p-1.5 transition-all overflow-hidden",
+                        c.cur ? "hover:border-primary cursor-pointer" : "opacity-10 cursor-default",
                         isToday ? "border-primary ring-2 ring-primary ring-offset-1 ring-offset-background" : pnl != null && pnl > 0 ? "border-green-500/40" : pnl != null && pnl < 0 ? "border-red-500/40" : "border-border",
                         dayBg
                       )}>
-                      {/* Day number — top-left */}
+                      {/* Day number */}
                       <span className={cn(
-                        "absolute top-1 left-1.5 text-[10px] font-bold leading-none",
+                        "text-[11px] font-bold leading-none",
                         isToday ? "text-primary" : "text-muted-foreground"
                       )}>{c.cur ? c.day : ""}</span>
 
-                      {/* Journal dot — top-right */}
+                      {/* Journal mood dot */}
                       {e && (
                         <span className={cn(
-                          "absolute top-1 right-1 h-1.5 w-1.5 rounded-full",
+                          "absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full",
                           e.mood === "great" ? "bg-green-500" : e.mood === "good" ? "bg-blue-400" : e.mood === "bad" || e.mood === "terrible" ? "bg-red-500" : "bg-amber-400"
                         )} />
                       )}
 
-                      {/* Center content */}
-                      <div className="flex flex-col items-center justify-center gap-0.5 mt-2">
-                        {pnl != null ? (
-                          <>
-                            <span className={cn(
-                              "font-black leading-none tabular-nums",
-                              "text-[11px] sm:text-xs md:text-sm",
-                              pnl >= 0 ? "text-green-500" : "text-red-500"
-                            )}>
-                              {fmtPnlCents(pnl)}
+                      {/* PnL centered */}
+                      {pnl != null && (
+                        <div className="flex-1 flex flex-col items-center justify-center gap-0.5 -mt-1">
+                          <span className={cn(
+                            "font-black leading-none tabular-nums text-center",
+                            "text-[10px] sm:text-[11px] md:text-xs",
+                            pnl >= 0 ? "text-green-500" : "text-red-500"
+                          )}>
+                            {fmtPnlCents(pnl)}
+                          </span>
+                          {tradeCount != null && (
+                            <span className="text-[8px] text-muted-foreground/50 leading-none">
+                              {tradeCount}t
                             </span>
-                            {tradeCount != null && (
-                              <span className="text-[8px] font-medium text-muted-foreground/60 leading-none">
-                                {tradeCount} {tradeCount === 1 ? "trade" : "trades"}
-                              </span>
-                            )}
-                          </>
-                        ) : e ? (
-                          <span className="text-[9px] text-muted-foreground/50">✓</span>
-                        ) : null}
-                      </div>
+                          )}
+                        </div>
+                      )}
                     </button>
                   );
                 })}
