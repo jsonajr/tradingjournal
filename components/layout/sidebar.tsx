@@ -52,10 +52,13 @@ export function AppSidebar({ profile }: { profile: Profile }) {
 
   return (
     <aside className={cn(
-      "hidden shrink-0 flex-col border-r bg-card transition-all duration-200 md:flex",
-      collapsed ? "w-14" : "w-60"
+      "hidden shrink-0 md:flex",
+      collapsed ? "w-20" : "w-64"
     )}>
-      {/* Header - no logo, just collapse toggle */}
+      <div className={cn(
+        "flex flex-col m-3 rounded-2xl border bg-card shadow-lg transition-all duration-200 overflow-hidden flex-1",
+        collapsed ? "w-14" : "w-full"
+      )}>
       <div className={cn("flex items-center border-b", collapsed ? "justify-center p-3" : "justify-between p-4")}>
         {!collapsed && (
           <span className="text-sm font-black tracking-tight" style={{color:'#FFE133'}}>TRADIATOR</span>
@@ -134,6 +137,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
+      </div>
       </div>
     </aside>
   );
