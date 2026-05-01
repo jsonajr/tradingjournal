@@ -6,63 +6,67 @@ import { useEffect, useRef, useState } from "react";
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [displayChildren, setDisplayChildren] = useState(children);
-  const [transitionStage, setTransitionStage] = useState<"idle" | "out" | "in">("idle");
+  const [stage, setStage] = useState<"visible" | "out" | "in">("visible");
   const prevPathname = useRef(pathname);
+  const outTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (pathname !== prevPathname.current) {
-      // Start exit animation
-      setTransitionStage("out");
-
-      const outTimer = setTimeout(() => {
-        // Swap content mid-animation
-        setDisplayChildren(children);
-        setTransitionStage("in");
-        prevPathname.current = pathname;
-
-        // Return to idle after enter completes
-        const inTimer = setTimeout(() => {
-          setTransitionStage("idle");
-        }, 220);
-
-        return () => clearTimeout(inTimer);
-      }, 150);
-
-      return () => clearTimeout(outTimer);
-    } else {
+    if (pathname === prevPathname.current) {
       setDisplayChildren(children);
+      return;
     }
+
+    // Clear any in-flight timers
+    if (outTimer.current) clearTimeout(outTimer.current);
+    if (inTimer.current) clearTimeout(inTimer.current);
+
+    // 1. Fade out current content
+    setStage("out");
+
+    // 2. After exit completes, swap content and fade in
+    outTimer.current = setTimeout(() => {
+      setDisplayChildren(children);
+      prevPathname.current = pathname;
+      setStage("in");
+
+      // 3. Once enter completes, return to visible
+      inTimer.current = setTimeout(() => {
+        setStage("visible");
+      }, 450);
+    }, 200);
+
+    return () => {
+      if (outTimer.current) clearTimeout(outTimer.current);
+      if (inTimer.current) clearTimeout(inTimer.current);
+    };
   }, [pathname, children]);
 
   return (
     <>
       <style>{`
-        .page-transition {
+        .pt-wrap {
           will-change: opacity, transform;
-          transition: opacity 150ms ease, transform 150ms ease;
         }
-        .page-transition[data-stage="idle"] {
+        .pt-wrap[data-stage="visible"] {
           opacity: 1;
-          transform: translateY(0px);
+          transform: translateY(0);
+          transition: none;
         }
-        .page-transition[data-stage="out"] {
+        .pt-wrap[data-stage="out"] {
           opacity: 0;
-          transform: translateY(6px);
+          transform: translateY(8px);
+          transition: opacity 200ms ease, transform 200ms ease;
         }
-        .page-transition[data-stage="in"] {
-          opacity: 0;
-          transform: translateY(-6px);
-          animation: pageEnter 220ms ease forwards;
+        .pt-wrap[data-stage="in"] {
+          animation: ptEnter 450ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
-        @keyframes pageEnter {
-          from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0px); }
+        @keyframes ptEnter {
+          from { opacity: 0; transform: translateY(-8px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <div
-        className="page-transition h-full"
-        data-stage={transitionStage}
-      >
+      <div className="pt-wrap h-full" data-stage={stage}>
         {displayChildren}
       </div>
     </>
