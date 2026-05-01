@@ -8,30 +8,35 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   const [displayChildren, setDisplayChildren] = useState(children);
   const [stage, setStage] = useState<"visible" | "out" | "in">("visible");
   const prevPathname = useRef(pathname);
+  const pendingChildren = useRef(children);
+  const isAnimating = useRef(false);
   const outTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Always keep latest children buffered — but don't apply until exit done
+  pendingChildren.current = children;
+
   useEffect(() => {
-    if (pathname === prevPathname.current) {
-      setDisplayChildren(children);
-      return;
-    }
+    if (pathname === prevPathname.current) return;
 
     // Clear any in-flight timers
     if (outTimer.current) clearTimeout(outTimer.current);
     if (inTimer.current) clearTimeout(inTimer.current);
 
-    // 1. Fade out current content
+    isAnimating.current = true;
+    prevPathname.current = pathname;
+
+    // 1. Start exit
     setStage("out");
 
-    // 2. After exit completes, swap content and fade in
+    // 2. After exit, swap to buffered children and enter
     outTimer.current = setTimeout(() => {
-      setDisplayChildren(children);
-      prevPathname.current = pathname;
+      setDisplayChildren(pendingChildren.current);
       setStage("in");
 
-      // 3. Once enter completes, return to visible
+      // 3. Settle to visible
       inTimer.current = setTimeout(() => {
+        isAnimating.current = false;
         setStage("visible");
       }, 450);
     }, 200);
@@ -40,26 +45,28 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
       if (outTimer.current) clearTimeout(outTimer.current);
       if (inTimer.current) clearTimeout(inTimer.current);
     };
-  }, [pathname, children]);
+  }, [pathname]);
+
+  // Only update displayed children when NOT animating
+  useEffect(() => {
+    if (!isAnimating.current) {
+      setDisplayChildren(children);
+    }
+  }, [children]);
 
   return (
     <>
       <style>{`
-        .pt-wrap {
-          will-change: opacity, transform;
-        }
+        .pt-wrap { will-change: opacity, transform; }
         .pt-wrap[data-stage="visible"] {
-          opacity: 1;
-          transform: translateY(0);
-          transition: none;
+          opacity: 1; transform: translateY(0); transition: none;
         }
         .pt-wrap[data-stage="out"] {
-          opacity: 0;
-          transform: translateY(8px);
+          opacity: 0; transform: translateY(8px);
           transition: opacity 200ms ease, transform 200ms ease;
         }
         .pt-wrap[data-stage="in"] {
-          animation: ptEnter 450ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: ptEnter 450ms cubic-bezier(0.22,1,0.36,1) forwards;
         }
         @keyframes ptEnter {
           from { opacity: 0; transform: translateY(-8px); }
