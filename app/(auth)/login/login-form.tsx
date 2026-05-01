@@ -64,7 +64,7 @@ function LoginFormInner() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <Link href="/" className="mb-2 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <TrendingUp className="h-4 w-4 text-primary" /> JsonTrades
+            <TrendingUp className="h-4 w-4 text-primary" /> Tradiator
           </Link>
           <CardTitle>Reset Password</CardTitle>
           <CardDescription>Enter your email and we&apos;ll send you a reset link.</CardDescription>
@@ -91,7 +91,7 @@ function LoginFormInner() {
     <Card className="w-full max-w-md">
       <CardHeader>
         <Link href="/" className="mb-2 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <TrendingUp className="h-4 w-4 text-primary" /> JsonTrades
+          <TrendingUp className="h-4 w-4 text-primary" /> Tradiator
         </Link>
         <CardTitle>Welcome back</CardTitle>
         <CardDescription>Sign in to your account</CardDescription>

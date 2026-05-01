@@ -58,7 +58,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
       {/* Header - no logo, just collapse toggle */}
       <div className={cn("flex items-center border-b", collapsed ? "justify-center p-3" : "justify-between p-4")}>
         {!collapsed && (
-          <span className="text-sm font-bold text-foreground">jsontrades</span>
+          <span className="text-sm font-black tracking-tight" style={{color:'#FFE133'}}>TRADIATOR</span>
         )}
         <button onClick={toggleCollapse} className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -85,7 +85,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
 
         {/* Discord separator + button */}
         <div className="my-1 border-t border-border" />
-        <a href="https://discord.gg/uuyAxCavGd" target="_blank" rel="noopener noreferrer"
+        <a href="https://discord.gg/yourinvite" target="_blank" rel="noopener noreferrer"
           title={collapsed ? "Join Discord" : undefined}
           className={cn(
             "flex items-center rounded-md px-2 py-2 text-sm font-medium transition-colors text-[#5865F2] hover:bg-[#5865F2]/10",

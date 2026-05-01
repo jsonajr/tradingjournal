@@ -5,6 +5,7 @@ import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { SuspendedOverlay } from "@/components/suspended-overlay";
 import { FreeBanner } from "@/components/free-banner";
+import { PageTransition } from "@/components/layout/page-transition";
 import { headers } from "next/headers";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -37,7 +38,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <MobileHeader profile={profile} />
       <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
         {isFree && <FreeBanner />}
-        {isBlocked ? <UpgradeRequired /> : children}
+        <PageTransition>
+          {isBlocked ? <UpgradeRequired /> : children}
+        </PageTransition>
       </main>
       <MobileTabBar profile={profile} />
       {suspension && (
