@@ -99,7 +99,7 @@ function SignupForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="fullName">Full name</Label>
-            <Input id="fullName" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Trader" autoComplete="name" />
+            <Input id="fullName" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Benjamin Netanyahu" autoComplete="name" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
