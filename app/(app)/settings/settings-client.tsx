@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Trash2, User, Wallet, Settings as SettingsIcon, CreditCard, AlertTriangle, Palette, Shield } from "lucide-react";
+import { Plus, Trash2, User, Wallet, Settings as SettingsIcon, CreditCard, AlertTriangle, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -24,7 +24,7 @@ type Subscription = { plan: string; status: string; current_period_end: string |
 export function SettingsClient({ profile, accounts: initialAccounts, settings, subscription }: { profile: Profile; accounts: Account[]; settings: UserSettings; subscription: Subscription }) {
   const router = useRouter();
   const supabase = createClient();
-  const [tab, setTab] = useState<"profile" | "accounts" | "preferences" | "subscription" | "danger" | "theme" | "sessions">("profile");
+  const [tab, setTab] = useState<"profile" | "accounts" | "preferences" | "subscription" | "danger" | "sessions">("profile");
   const [clearingTrades, setClearingTrades] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [accounts, setAccounts] = useState(initialAccounts);
@@ -160,7 +160,6 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
         <TabBtn active={tab === "accounts"} onClick={() => setTab("accounts")}><Wallet className="mr-1 h-3.5 w-3.5" />Accounts</TabBtn>
         <TabBtn active={tab === "preferences"} onClick={() => setTab("preferences")}><SettingsIcon className="mr-1 h-3.5 w-3.5" />Preferences</TabBtn>
         <TabBtn active={tab === "subscription"} onClick={() => setTab("subscription")}><CreditCard className="mr-1 h-3.5 w-3.5" />Subscription</TabBtn>
-        <TabBtn active={tab === "theme"} onClick={() => setTab("theme")}><Palette className="mr-1 h-3.5 w-3.5" />Theme</TabBtn>
         <TabBtn active={tab === "sessions"} onClick={() => setTab("sessions")}><Shield className="mr-1 h-3.5 w-3.5" />Sessions</TabBtn>
         <TabBtn active={tab === "danger"} onClick={() => setTab("danger")}><AlertTriangle className="mr-1 h-3.5 w-3.5 text-destructive" /><span className="text-destructive">Danger Zone</span></TabBtn>
       </div>
@@ -467,10 +466,6 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
         </div>
       )}
 
-      {tab === "theme" && (
-        <ThemePanel profile={profile} />
-      )}
-
       {tab === "sessions" && <SessionsTab timezone={tz} />}
 
       {/* Account dialog */}
@@ -530,64 +525,5 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
     >
       {children}
     </button>
-  );
-}
-
-const ACCENT_COLORS = [
-  { name: "Purple", value: "#8b5cf6" },
-  { name: "Blue",   value: "#3b82f6" },
-  { name: "Green",  value: "#22c55e" },
-  { name: "Amber",  value: "#f59e0b" },
-  { name: "Red",    value: "#ef4444" },
-  { name: "Cyan",   value: "#06b6d4" },
-  { name: "Pink",   value: "#ec4899" },
-  { name: "Orange", value: "#f97316" },
-];
-
-function ThemePanel({ profile: _profile }: { profile: Profile }) {
-  function setAccent(hex: string) {
-    const r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
-    const max = Math.max(r,g,b), min = Math.min(r,g,b);
-    let h = 0, s = 0; const l = (max+min)/2;
-    if (max !== min) {
-      const d = max - min; s = l > 0.5 ? d/(2-max-min) : d/(max+min);
-      switch(max) { case r: h=(g-b)/d+(g<b?6:0); break; case g: h=(b-r)/d+2; break; case b: h=(r-g)/d+4; break; }
-      h /= 6;
-    }
-    const hsl = `${Math.round(h*360)} ${Math.round(s*100)}% ${Math.round(l*100)}%`;
-    document.documentElement.style.setProperty("--primary", hsl);
-    try { localStorage.setItem("tj_accent", hex); } catch {}
-  }
-
-  // Auto font size based on viewport
-  useEffect(() => {
-    function applyAutoFont() {
-      const w = window.innerWidth;
-      const size = w < 375 ? "13px" : w < 768 ? "15px" : w < 1280 ? "15px" : "16px";
-      document.documentElement.style.fontSize = size;
-    }
-    applyAutoFont();
-    window.addEventListener("resize", applyAutoFont);
-    return () => window.removeEventListener("resize", applyAutoFont);
-  }, []);
-
-  return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Palette className="h-4 w-4" />Accent Color</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground mb-3">Choose your accent color. Applied immediately and saved.</p>
-          <div className="flex flex-wrap gap-3">
-            {ACCENT_COLORS.map((c) => (
-              <button key={c.value} onClick={() => setAccent(c.value)} className="flex flex-col items-center gap-1.5 group">
-                <div className="h-10 w-10 rounded-full border-2 border-white/20 shadow-lg transition-transform group-hover:scale-110" style={{ background: c.value }} />
-                <span className="text-[10px] text-muted-foreground">{c.name}</span>
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-    </div>
   );
 }

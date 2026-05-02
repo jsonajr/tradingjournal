@@ -187,7 +187,7 @@ export function DashboardStats({
         <Card><CardContent className="p-3 md:p-4">
           <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Avg W / L</div>
           <div className="flex items-baseline gap-0.5 flex-wrap">
-            <span className="text-base sm:text-lg md:text-xl font-black text-green-500 leading-tight">{avgWin > 0 ? fmtCompact(avgWin) : "—"}</span>
+            <span className="text-base sm:text-lg md:text-xl font-black text-green-500 leading-tight">{avgWin > 0 ? `+${fmtCompact(avgWin)}` : "—"}</span>
             <span className="text-muted-foreground text-[9px]">/</span>
             <span className="text-base sm:text-lg md:text-xl font-black text-red-500 leading-tight">{avgLoss > 0 ? fmtCompact(-avgLoss, true) : "—"}</span>
           </div>
