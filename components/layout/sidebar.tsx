@@ -89,7 +89,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
 
         {/* Discord separator + button */}
         <div className="my-1 border-t border-border" />
-        <a href="https://discord.gg/yourinvite" target="_blank" rel="noopener noreferrer"
+        <a href="https://discord.gg/uuyAxCavGd" target="_blank" rel="noopener noreferrer"
           title={collapsed ? "Join Discord" : undefined}
           className={cn(
             "flex items-center rounded-md px-2 py-2 text-sm font-medium transition-colors text-[#5865F2] hover:bg-[#5865F2]/10",
