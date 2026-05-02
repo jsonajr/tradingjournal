@@ -45,6 +45,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
   }
 
   async function signOut() {
+    if (!confirm("Are you sure you want to sign out?")) return;
     await supabase.auth.signOut();
     router.push("/");
     router.refresh();
