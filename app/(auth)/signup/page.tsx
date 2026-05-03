@@ -58,6 +58,8 @@ function SignupForm() {
 
     if (data.user) {
       await supabase.from("invite_codes").update({ used_at: new Date().toISOString(), used_by: data.user.id }).eq("id", invite.id);
+      await supabase.from("profiles").update({ plan: "premium" }).eq("id", data.user.id);
+      await supabase.from("subscriptions").upsert({ user_id: data.user.id, plan: "premium", status: "active" }, { onConflict: "user_id" });
     }
 
     if (data.user && !data.session) {
