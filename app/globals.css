@@ -76,3 +76,5 @@
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
 }
+/* Docs page mock input */
+.mock-input { @apply rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground; }

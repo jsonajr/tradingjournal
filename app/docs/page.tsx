@@ -145,7 +145,7 @@ const HTML = `
       <div class="repo-icon">
         <svg viewBox="0 0 16 16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 0 1 1-1h8zM5 12.25v3.25a.25.25 0 0 0 .4.2l1.45-1.087a.25.25 0 0 1 .3 0L8.6 15.7a.25.25 0 0 0 .4-.2v-3.25a.25.25 0 0 0-.25-.25h-3.5a.25.25 0 0 0-.25.25z"/></svg>
       </div>
-      <div><div class="repo-name">jsontrades <span>/ docs</span></div></div>
+      <div><div class="repo-name">tradiator <span>/ docs</span></div></div>
     </a>
     <div class="sb-version">v1.0 · Public</div>
   </div>
@@ -175,9 +175,9 @@ const HTML = `
 
 <div class="page-header">
   <div class="breadcrumb">
-    <a href="#">jsontrades</a><span>/</span><a href="#">docs</a>
+    <a href="#">tradiator</a><span>/</span><a href="#">docs</a>
   </div>
-  <h1>JsonTrades Documentation</h1>
+  <h1>Tradiator Documentation</h1>
   <p>QA tester reference covering every feature, screen, API endpoint, database table, and test scenario. Covers the full platform as of v1.0.</p>
   <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
     <span class="badge b-blue">Next.js 15</span>
@@ -212,7 +212,7 @@ const HTML = `
 
 <section id="overview">
 <h2>Overview</h2>
-<p>JsonTrades is a trading journal and analytics platform for funded futures traders. Log trades, write daily playbook entries, track evaluation costs and payouts, analyze performance, and document strategies — all in one dashboard.</p>
+<p>Tradiator is a trading journal and analytics platform for funded futures traders. Log trades, write daily playbook entries, track evaluation costs and payouts, analyze performance, and document strategies — all in one dashboard.</p>
 <div class="fg">
   <div class="fc"><div class="fc-icon">📊</div><div class="fc-title">Performance Dashboard</div><div class="fc-desc">Real-time equity curve, net P&amp;L, win rate, profit factor, and best day/DOW stats.</div></div>
   <div class="fc"><div class="fc-icon">📅</div><div class="fc-title">Playbook Calendar</div><div class="fc-desc">Monthly grid with daily P&amp;L per cell. Click a day with an entry to open the full journal view.</div></div>
@@ -278,7 +278,7 @@ const HTML = `
 <h2>Dashboard</h2>
 <p>Main landing page after login. Route: <code>/dashboard</code>. Shows aggregate performance stats, equity curve, recent trades, and recent journal entries.</p>
 <div class="screen">
-  <div class="screen-bar"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><div class="url">jsontrades.app/dashboard</div></div>
+  <div class="screen-bar"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><div class="url">tradiator.net/dashboard</div></div>
   <div class="screen-body">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <div><div style="font-size:18px;font-weight:700;color:#1f2328">Welcome back, Jason</div><div style="font-size:12px;color:#656d76">Your trading overview</div></div>
@@ -368,7 +368,7 @@ R = (entryPrice - exitPrice) / Math.abs(entryPrice - stopPrice)</pre>
 <h2>Playbook Calendar</h2>
 <p>Route: <code>/journal/calendar</code>. Monthly grid where each day cell shows that day's net P&amp;L and trade count. Green = profit, Red = loss.</p>
 <div class="screen">
-  <div class="screen-bar"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><div class="url">jsontrades.app/journal/calendar</div></div>
+  <div class="screen-bar"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><div class="url">tradiator.net/journal/calendar</div></div>
   <div class="screen-body">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px">
       <div class="scard"><div class="slabel">Month P&amp;L</div><div class="sval green" style="font-size:15px">+$8,420</div><div class="ssub">12W · 4L</div></div>
@@ -421,7 +421,7 @@ R = (entryPrice - exitPrice) / Math.abs(entryPrice - stopPrice)</pre>
 <h2>Journal Day View</h2>
 <p>Route: <code>/journal/calendar/YYYY-MM-DD</code>. Full-page view for a specific trading day. Only reachable when a day has an existing journal entry.</p>
 <div class="screen">
-  <div class="screen-bar"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><div class="url">jsontrades.app/journal/calendar/2025-04-28</div></div>
+  <div class="screen-bar"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div><div class="url">tradiator.net/journal/calendar/2025-04-28</div></div>
   <div class="screen-body">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:10px">
@@ -843,7 +843,7 @@ R = (entryPrice - exitPrice) / Math.abs(entryPrice - stopPrice)</pre>
 </section>
 
 <hr/>
-<p style="text-align:center;color:#656d76;font-family:'JetBrains Mono',monospace;font-size:11px;padding:16px 0">JsonTrades Documentation · For internal tester use only · Do not distribute publicly</p>
+<p style="text-align:center;color:#656d76;font-family:'JetBrains Mono',monospace;font-size:11px;padding:16px 0">Tradiator Documentation · For internal tester use only · Do not distribute publicly</p>
 
 </main>
 </div>
