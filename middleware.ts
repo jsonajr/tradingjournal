@@ -1,57 +1,15 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Routes that belong exclusively to the app. subdomain
 const APP_ROUTES = [
   "/dashboard", "/trades", "/journal", "/insights",
   "/strategies", "/eval", "/import", "/settings", "/admin",
 ];
 
-// Routes that are marketing-only (www.)
-const MARKETING_ONLY = ["/pricing"];
+const AUTH_ROUTES = ["/login", "/signup"];
 
 export async function middleware(request: NextRequest) {
-  const hostname = request.headers.get("host") ?? "";
-  const url = request.nextUrl.clone();
-  const path = url.pathname;
-
-  const isLocal = hostname.startsWith("localhost");
-  const isApp   = hostname.startsWith("app.");
-  const isWww   = hostname.startsWith("www.");
-
-  // ── app.tradiator.net ─────────────────────────────────────────────────────
-  if (isApp) {
-    // Root → dashboard
-    if (path === "/") {
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
-    }
-    // Marketing-only paths → send to www
-    if (MARKETING_ONLY.some((r) => path.startsWith(r))) {
-      const wwwUrl = new URL(url);
-      wwwUrl.host = hostname.replace("app.", "www.");
-      return NextResponse.redirect(wwwUrl);
-    }
-  }
-
-  // ── www.tradiator.net ─────────────────────────────────────────────────────
-  if (isWww) {
-    // App routes on www → redirect to app subdomain
-    const isAppRoute = APP_ROUTES.some((r) => path.startsWith(r));
-    if (isAppRoute) {
-      const appUrl = new URL(url);
-      appUrl.host = hostname.replace("www.", "app.");
-      return NextResponse.redirect(appUrl);
-    }
-    // /login and /signup live on app subdomain for cookie consistency
-    if (path.startsWith("/login") || path.startsWith("/signup")) {
-      const appUrl = new URL(url);
-      appUrl.host = hostname.replace("www.", "app.");
-      return NextResponse.redirect(appUrl);
-    }
-  }
-
-  // ── Supabase session refresh ──────────────────────────────────────────────
+  const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -71,8 +29,34 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
-  response.headers.set("x-pathname", request.nextUrl.pathname);
+  // Refresh session
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const isAppRoute = APP_ROUTES.some(r => pathname.startsWith(r));
+  const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r));
+
+  // ── Unauthenticated user trying to access app ─────────────────────────────
+  // Instead of a hard redirect, rewrite to login page content
+  // This keeps the URL the same so iOS stays in standalone mode,
+  // then the client-side PwaNavFix handles pushing to /login
+  if (isAppRoute && !user) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    // Use rewrite instead of redirect to avoid breaking iOS standalone
+    const isPwa = request.headers.get("sec-fetch-dest") === "document" &&
+                  !request.headers.get("sec-fetch-site");
+    if (isPwa) {
+      return NextResponse.rewrite(loginUrl);
+    }
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // ── Authenticated user on auth pages → send to dashboard ─────────────────
+  if (isAuthRoute && user) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  response.headers.set("x-pathname", pathname);
   return response;
 }
 
