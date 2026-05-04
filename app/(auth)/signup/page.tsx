@@ -28,7 +28,7 @@ function SignupForm() {
 
     const { data: invite, error: inviteErr } = await supabase
       .from("invite_codes")
-      .select("id, used_at, expires_at")
+      .select("id, expires_at")
       .eq("code", inviteCode.trim().toUpperCase())
       .maybeSingle();
 
@@ -37,11 +37,7 @@ function SignupForm() {
       setLoading(false);
       return;
     }
-    if (invite.used_at) {
-      toast.error("This invite code has already been used.");
-      setLoading(false);
-      return;
-    }
+
     if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
       toast.error("This invite code has expired.");
       setLoading(false);
@@ -57,7 +53,6 @@ function SignupForm() {
     if (error) { toast.error(error.message); return; }
 
     if (data.user) {
-      await supabase.from("invite_codes").update({ used_at: new Date().toISOString(), used_by: data.user.id }).eq("id", invite.id);
       await supabase.from("profiles").update({ plan: "premium" }).eq("id", data.user.id);
       await supabase.from("subscriptions").upsert({ user_id: data.user.id, plan: "premium", status: "active" }, { onConflict: "user_id" });
     }
@@ -76,7 +71,7 @@ function SignupForm() {
     <Card className="w-full max-w-md">
       <CardHeader>
         <Link href="/" className="mb-2 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <TrendingUp className="h-4 w-4 text-primary" /> Tradiator
+          <TrendingUp className="h-4 w-4 text-primary" /> tradiator
         </Link>
         <CardTitle>Create your account</CardTitle>
         <CardDescription className="flex items-center gap-1.5">
