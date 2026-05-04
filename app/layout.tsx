@@ -6,8 +6,8 @@ export const metadata: Metadata = {
   title: "Tradiator",
   description: "...",
   icons: {
-    icon: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: "/icon.svg",
+    apple: "/icon.svg",
   },
 };
 
