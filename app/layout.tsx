@@ -4,10 +4,18 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Tradiator",
+    default: "Tradiator — Trading Discipline Platform",
     template: "%s | Tradiator",
   },
   description: "Trade journal, analytics, and discipline tools for serious traders.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Tradiator",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport = {

@@ -18,10 +18,12 @@ export function MobileHeader({ profile }: { profile: Profile }) {
       style={{ paddingTop: "calc(env(safe-area-inset-top) + 12px)" }}
     >
       <Link href="/dashboard" className="flex items-center gap-2">
-        <div>
-          <div className="text-sm font-black tracking-tight leading-tight" style={{color:'#FFE133'}}>TRADIATOR</div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-tight">{profile.role} · {profile.plan}</div>
-        </div>
+        <svg width="24" height="24" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="7" fill="#111827"/>
+          <rect x="4" y="7" width="24" height="4.5" rx="1.5" fill="#FFDE28"/>
+          <polygon points="16,5 23,14 19.5,14 19.5,27 12.5,27 12.5,14 9,14" fill="#FFDE28"/>
+        </svg>
+        <span className="text-sm font-black tracking-tight" style={{color:'#FFE133'}}>TRADIATOR</span>
       </Link>
       <div className="flex items-center gap-1">
         <a href="https://discord.gg/uuyAxCavGd" target="_blank" rel="noopener noreferrer"
