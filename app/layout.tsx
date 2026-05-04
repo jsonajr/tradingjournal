@@ -3,8 +3,12 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tradiator — Trading Discipline Platform",
-  description: "Trade journal, analytics, and discipline tools for serious traders.",
+  title: "Tradiator",
+  description: "...",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export const viewport = {
