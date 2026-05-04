@@ -30,7 +30,8 @@ export default async function InsightsPage() {
   const grossP = wins.reduce((s, tr) => s + tr.pnl, 0);
   const grossL = Math.abs(losses.reduce((s, tr) => s + tr.pnl, 0));
   const pf = grossL > 0 ? grossP / grossL : grossP > 0 ? 999 : 0;
-  const avgRMultiple = t.filter(tr => tr.r_multiple != null).reduce((s, tr) => s + (tr.r_multiple ?? 0), 0) / (t.filter(tr => tr.r_multiple != null).length || 1);
+  const rTrades = t.filter(tr => tr.r_multiple != null);
+  const avgRMultiple = rTrades.length ? rTrades.reduce((s, tr) => s + (tr.r_multiple ?? 0), 0) / rTrades.length : 0;
   const totalContracts = t.reduce((s, tr) => s + (tr.contracts ?? 0), 0);
   const avgContracts = t.length ? totalContracts / t.length : 0;
 
@@ -41,7 +42,7 @@ export default async function InsightsPage() {
   // Day of week breakdown
   const dowPnl: Record<string, { pnl: number; count: number }> = {};
   t.forEach(tr => {
-    const dow = new Date(tr.trade_date).toLocaleDateString("en-US", { weekday: "long" });
+    const [y,m,d] = tr.trade_date.split("-").map(Number); const dow = new Date(y, m-1, d).toLocaleDateString("en-US", { weekday: "long" });
     if (!dowPnl[dow]) dowPnl[dow] = { pnl: 0, count: 0 };
     dowPnl[dow].pnl += tr.pnl - tr.commission;
     dowPnl[dow].count++;
@@ -112,7 +113,7 @@ export default async function InsightsPage() {
         <StatGrid>
           <Stat label="Best Day of Week" value={bestDay?.[0]?.slice(0, 3) ?? "—"} sub={bestDay ? fmtMoney(bestDay[1].pnl, true) + ` · ${bestDay[1].count} trades` : ""} color="text-green-500" />
           <Stat label="Worst Day of Week" value={worstDay?.[0]?.slice(0, 3) ?? "—"} sub={worstDay ? fmtMoney(worstDay[1].pnl, true) + ` · ${worstDay[1].count} trades` : ""} color="text-red-500" />
-          <Stat label="Best Month" value={bestMonth ? new Date(bestMonth[0] + "-01").toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—"} sub={bestMonth ? fmtMoney(bestMonth[1], true) : ""} color="text-green-500" />
+          <Stat label="Best Month" value={bestMonth ? new Date(parseInt(bestMonth[0].split("-")[0]), parseInt(bestMonth[0].split("-")[1])-1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—"} sub={bestMonth ? fmtMoney(bestMonth[1], true) : ""} color="text-green-500" />
           <Stat label="Unique Trading Days" value={new Set(t.map(tr => tr.trade_date)).size.toString()} />
           <Stat label="Avg Trades/Day" value={new Set(t.map(tr => tr.trade_date)).size > 0 ? (t.length / new Set(t.map(tr => tr.trade_date)).size).toFixed(1) : "—"} />
           <Stat label="Total Trading Days" value={new Set(t.map(tr => tr.trade_date)).size.toString()} sub="unique dates" />
