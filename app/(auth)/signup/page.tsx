@@ -76,7 +76,7 @@ function SignupForm() {
     <Card className="w-full max-w-md">
       <CardHeader>
         <Link href="/" className="mb-2 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <TrendingUp className="h-4 w-4 text-primary" /> tradiator
+          <TrendingUp className="h-4 w-4 text-primary" /> Tradiator
         </Link>
         <CardTitle>Create your account</CardTitle>
         <CardDescription className="flex items-center gap-1.5">
