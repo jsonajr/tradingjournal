@@ -21,7 +21,7 @@ export default async function InsightsPage() {
   const sb = await createClient();
 
   const [{ data: trades }, { data: entries }] = await Promise.all([
-    sb.from("trades").select("*").eq("user_id", user.id).order("trade_date", { ascending: true }),
+    sb.from("trades").select("*").eq("user_id", user.id).order("trade_date", { ascending: true }).range(0, 9999),
     sb.from("journal_entries").select("entry_date, rating, rules_followed, mood").eq("user_id", user.id),
   ]);
 
