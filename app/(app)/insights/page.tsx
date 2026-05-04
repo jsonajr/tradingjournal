@@ -55,6 +55,13 @@ export default async function InsightsPage() {
   const avgR     = avg(rTrades.map(tr => tr.r_multiple ?? 0));
   const totalContracts = t.reduce((s, tr) => s + (tr.contracts ?? 0), 0);
   const tradingDays = new Set(t.map(tr => tr.trade_date)).size;
+  const sortedDates  = t.map(tr => tr.trade_date).sort();
+  const firstDate    = sortedDates[0];
+  const lastDate     = sortedDates[sortedDates.length - 1];
+  function fmtDateRange(d: string) {
+    const [y,m,dd] = d.split("-").map(Number);
+    return new Date(y, m-1, dd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
 
   // Best / worst single trade
   const bestTrade  = t.reduce((a, b) => b.pnl > a.pnl ? b : a);
@@ -146,12 +153,12 @@ export default async function InsightsPage() {
   const journalRate       = pct(journaledDays, tradingDays);
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl">
+    <div className="p-4 md:p-6">
 
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">Insights</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">All-time performance across {t.length.toLocaleString()} trades · {tradingDays} trading days</p>
+        <p className="text-sm text-muted-foreground mt-0.5">{fmtDateRange(firstDate)} — {fmtDateRange(lastDate)} · {t.length.toLocaleString()} trades · {tradingDays} trading days</p>
       </div>
 
       {/* ── SECTION 1: Core Stats ── */}
