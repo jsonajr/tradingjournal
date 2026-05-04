@@ -112,7 +112,7 @@ export default async function InsightsPage() {
       <Section title="Timing & Patterns" icon={<Calendar className="h-4 w-4" />}>
         <StatGrid>
           <Stat label="Best Day of Week" value={bestDay?.[0]?.slice(0, 3) ?? "—"} sub={bestDay ? fmtMoney(bestDay[1].pnl, true) + ` · ${bestDay[1].count} trades` : ""} color="text-green-500" />
-          <Stat label="Worst Day of Week" value={worstDay?.[0]?.slice(0, 3) ?? "—"} sub={worstDay ? fmtMoney(worstDay[1].pnl, true) + ` · ${worstDay[1].count} trades` : ""} color="text-red-500" />
+          <Stat label="Lowest Day of Week" value={worstDay?.[0]?.slice(0, 3) ?? "—"} sub={worstDay ? fmtMoney(worstDay[1].pnl, true) + ` · ${worstDay[1].count} trades` : ""} color="text-red-500" />
           <Stat label="Best Month" value={bestMonth ? new Date(parseInt(bestMonth[0].split("-")[0]), parseInt(bestMonth[0].split("-")[1])-1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—"} sub={bestMonth ? fmtMoney(bestMonth[1], true) : ""} color="text-green-500" />
           <Stat label="Unique Trading Days" value={new Set(t.map(tr => tr.trade_date)).size.toString()} />
           <Stat label="Avg Trades/Day" value={new Set(t.map(tr => tr.trade_date)).size > 0 ? (t.length / new Set(t.map(tr => tr.trade_date)).size).toFixed(1) : "—"} />

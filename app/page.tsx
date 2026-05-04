@@ -204,22 +204,7 @@ export default async function RootPage() {
           Built for traders who are serious<br className="hidden md:block" /> about improving
         </h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[
-            { title:"Live Dashboard",      desc:"Net PnL, win rate, profit factor, best day, best DOW — filtered by any date range.", emoji:"📊" },
-            { title:"Playbook Calendar",   desc:"Monthly calendar with daily P&L. Write your bias, plan, mood, and session notes.", emoji:"📅" },
-            { title:"Trade Log",           desc:"Log every trade with symbol, direction, setup, session, grade, and auto R-multiple.", emoji:"📋" },
-            { title:"Discipline System",   desc:"Pre-trade checklists and post-trade reflections enforce your rules every single time.", emoji:"🛡️" },
-            { title:"Deep Insights",       desc:"Best setups, top symbols, day-of-week breakdown — find your real edge.", emoji:"⚡" },
-            { title:"Strategy Library",    desc:"Document every setup with entry conditions, confluences, sessions, and timeframes.", emoji:"📐" },
-          ].map(({ title, desc, emoji }) => (
-            <div key={title} className="group rounded-xl p-6 transition-all duration-200 hover:[border-color:rgba(255,222,40,0.25)]"
-              style={{ background:"hsl(223,26%,11%)", border:"1px solid rgba(255,255,255,0.07)" }}>
-              <div className="mb-4 text-2xl">{emoji}</div>
-              <h3 className="mb-2 text-sm font-semibold text-white">{title}</h3>
-              <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.45)" }}>{desc}</p>
-            </div>
-          ))}
-          {/* Prop eval — highlighted card spanning full width */}
+          {/* Prop eval — highlighted card spanning full width, shown first */}
           <div className="lg:col-span-3 rounded-xl p-6 flex flex-col sm:flex-row sm:items-center gap-6"
             style={{ background:"hsl(223,26%,11%)", border:"1px solid rgba(255,222,40,0.2)" }}>
             <div className="flex-1">
@@ -239,6 +224,21 @@ export default async function RootPage() {
               ))}
             </div>
           </div>
+          {[
+            { title:"Live Dashboard",      desc:"Net PnL, win rate, profit factor, best day, best DOW — filtered by any date range.", emoji:"📊" },
+            { title:"Playbook Calendar",   desc:"Monthly calendar with daily P&L. Write your bias, plan, mood, and session notes.", emoji:"📅" },
+            { title:"Trade Log",           desc:"Log every trade with symbol, direction, setup, session, grade, and auto R-multiple.", emoji:"📋" },
+            { title:"Discipline System",   desc:"Pre-trade checklists and post-trade reflections enforce your rules every single time.", emoji:"🛡️" },
+            { title:"Deep Insights",       desc:"Best setups, top symbols, day-of-week breakdown — find your real edge.", emoji:"⚡" },
+            { title:"Strategy Library",    desc:"Document every setup with entry conditions, confluences, sessions, and timeframes.", emoji:"📐" },
+          ].map(({ title, desc, emoji }) => (
+            <div key={title} className="group rounded-xl p-6 transition-all duration-200 hover:[border-color:rgba(255,222,40,0.25)]"
+              style={{ background:"hsl(223,26%,11%)", border:"1px solid rgba(255,255,255,0.07)" }}>
+              <div className="mb-4 text-2xl">{emoji}</div>
+              <h3 className="mb-2 text-sm font-semibold text-white">{title}</h3>
+              <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.45)" }}>{desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
