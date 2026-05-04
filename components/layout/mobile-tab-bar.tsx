@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, List, CalendarDays, Settings, BookOpen, BarChart2 } from "lucide-react";
+import { LayoutDashboard, List, CalendarDays, Settings, BookOpen, BarChart2, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/auth";
 
@@ -11,6 +11,7 @@ export function MobileTabBar({ profile: _ }: { profile: Profile }) {
     { href: "/dashboard",        label: "Home",       icon: LayoutDashboard },
     { href: "/trades",           label: "Trades",     icon: List },
     { href: "/journal/calendar", label: "Calendar",   icon: CalendarDays },
+    { href: "/eval",             label: "Tracker",   icon: DollarSign },
     { href: "/insights",         label: "Insights",   icon: BarChart2 },
     { href: "/strategies",       label: "Strategies", icon: BookOpen },
     { href: "/settings",         label: "Settings",   icon: Settings },
