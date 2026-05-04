@@ -21,28 +21,11 @@ const TICKERS = [
 
 /* Favicon icon — gladius T with plume — inline SVG so it works as a nav logo */
 function TradiatorIcon({ size = 28 }: { size?: number }) {
-  const s = size;
-  const u = s / 32;
   return (
-    <svg width={s} height={s} viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="7" fill="#0f1117"/>
-      {/* Plume */}
-      <rect x="13" y="2" width="3" height="9" rx="1.5" fill="#FFDE28" transform="rotate(-10 14.5 6)"/>
-      <rect x="14.5" y="1" width="3" height="10" rx="1.5" fill="#FFDE28"/>
-      <rect x="16" y="2" width="3" height="9" rx="1.5" fill="#FFDE28" transform="rotate(10 17.5 6)"/>
-      {/* Crossbar blade */}
-      <rect x="5" y="11" width="22" height="5" rx="2" fill="#FFDE28"/>
-      {/* Left tip */}
-      <polygon points="5,11 5,16 1,13.5" fill="#FFDE28"/>
-      {/* Right tip */}
-      <polygon points="27,11 27,16 31,13.5" fill="#FFDE28"/>
-      {/* Shaft */}
-      <rect x="13" y="16" width="6" height="11" rx="2" fill="#FFDE28"/>
-      {/* Grip lines */}
-      <rect x="13" y="19" width="6" height="1.5" rx="0.5" fill="#c8a800"/>
-      <rect x="13" y="22" width="6" height="1.5" rx="0.5" fill="#c8a800"/>
-      {/* Pommel */}
-      <ellipse cx="16" cy="29" rx="4.5" ry="3" fill="#FFDE28"/>
+    <svg width={size} height={size} viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="7" fill="#111827"/>
+      <rect x="4" y="7" width="24" height="4.5" rx="1.5" fill="#FFDE28"/>
+      <polygon points="16,5 23,14 19.5,14 19.5,27 12.5,27 12.5,14 9,14" fill="#FFDE28"/>
     </svg>
   );
 }

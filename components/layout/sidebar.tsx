@@ -62,7 +62,23 @@ export function AppSidebar({ profile }: { profile: Profile }) {
       )}>
       <div className={cn("flex items-center border-b", collapsed ? "justify-center p-3" : "justify-between p-4")}>
         {!collapsed && (
-          <a href="https://www.tradiator.net" className="text-sm font-black tracking-tight hover:opacity-80 transition-opacity" style={{color:'#FFE133'}}>TRADIATOR</a>
+          <a href="https://www.tradiator.net" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <svg width="22" height="22" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="7" fill="#111827"/>
+              <rect x="4" y="7" width="24" height="4.5" rx="1.5" fill="#FFDE28"/>
+              <polygon points="16,5 23,14 19.5,14 19.5,27 12.5,27 12.5,14 9,14" fill="#FFDE28"/>
+            </svg>
+            <span className="text-sm font-black tracking-tight" style={{color:'#FFE133'}}>TRADIATOR</span>
+          </a>
+        )}
+        {collapsed && (
+          <a href="https://www.tradiator.net" className="hover:opacity-80 transition-opacity">
+            <svg width="22" height="22" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="7" fill="#111827"/>
+              <rect x="4" y="7" width="24" height="4.5" rx="1.5" fill="#FFDE28"/>
+              <polygon points="16,5 23,14 19.5,14 19.5,27 12.5,27 12.5,14 9,14" fill="#FFDE28"/>
+            </svg>
+          </a>
         )}
         <button onClick={toggleCollapse} className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
