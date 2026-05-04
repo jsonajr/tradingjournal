@@ -129,7 +129,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
         {!collapsed && (
           <div className="mb-2 px-2">
             <div className="truncate text-sm font-medium">{profile.full_name || profile.email}</div>
-            <div className="text-xs uppercase tracking-wide text-primary">{profile.role} · {profile.plan}</div>
+            <div className="text-xs uppercase tracking-wide text-primary">{profile.plan}</div>
           </div>
         )}
         <div className={cn("flex", collapsed ? "flex-col gap-1" : "items-center justify-between")}>

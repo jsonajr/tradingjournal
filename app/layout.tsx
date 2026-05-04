@@ -3,12 +3,11 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tradiator",
-  description: "...",
-  icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg",
+  title: {
+    default: "Tradiator",
+    template: "%s | Tradiator",
   },
+  description: "Trade journal, analytics, and discipline tools for serious traders.",
 };
 
 export const viewport = {

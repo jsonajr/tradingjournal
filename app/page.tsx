@@ -4,7 +4,9 @@ import { getCurrentProfile } from "@/lib/auth";
 import { TrendingUp, BarChart2, BookOpen, Shield, Zap, ArrowRight } from "lucide-react";
 
 export const metadata = {
-  title: "Tradiator — Trade with Discipline",
+  title: {
+    absolute: "Tradiator",
+  },
   description: "The trading journal and discipline platform built for serious futures traders. Log every trade, enforce your rules, find your edge.",
 };
 
