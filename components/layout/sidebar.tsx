@@ -62,7 +62,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
       )}>
       <div className={cn("flex items-center border-b", collapsed ? "justify-center p-3" : "justify-between p-4")}>
         {!collapsed && (
-          <span className="text-sm font-black tracking-tight" style={{color:'#FFE133'}}>TRADIATOR</span>
+          <a href="https://www.tradiator.net" className="text-sm font-black tracking-tight hover:opacity-80 transition-opacity" style={{color:'#FFE133'}}>TRADIATOR</a>
         )}
         <button onClick={toggleCollapse} className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
