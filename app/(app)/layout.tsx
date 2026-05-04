@@ -6,6 +6,7 @@ import { MobileHeader } from "@/components/layout/mobile-header";
 import { SuspendedOverlay } from "@/components/suspended-overlay";
 import { FreeBanner } from "@/components/free-banner";
 import { PageTransition } from "@/components/layout/page-transition";
+import { PwaNavFix } from "@/components/pwa-nav-fix";
 import { headers } from "next/headers";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -43,6 +44,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </PageTransition>
       </main>
       <MobileTabBar profile={profile} />
+      <PwaNavFix />
       {suspension && (
         <SuspendedOverlay
           reason={suspension.reason ?? ""}
