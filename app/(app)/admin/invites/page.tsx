@@ -27,6 +27,7 @@ export default async function AdminInvitesPage() {
 
   const enriched = (invites ?? []).map(inv => ({
     ...inv,
+    creator: Array.isArray(inv.creator) ? (inv.creator[0] ?? null) : inv.creator,
     useCount: useCounts[inv.code] ?? 0,
   }));
 
