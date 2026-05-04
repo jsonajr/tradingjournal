@@ -244,10 +244,8 @@ export default async function RootPage() {
             { icon: TrendingUp, title: "Prop Eval Tracker", desc: "Track every evaluation fee, reset, and payout per firm. See your true net profitability across all prop firms.", emoji: "🏆" },
           ].map(({ title, desc, emoji }) => (
             <div key={title}
-              className="group rounded-xl p-6 transition-all"
-              style={{ background: "hsl(223,26%,11%)", border: "1px solid rgba(255,255,255,0.07)" }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(255,222,40,0.25)")}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}>
+              className="group rounded-xl p-6 transition-all duration-200 hover:[border-color:rgba(255,222,40,0.25)]"
+              style={{ background: "hsl(223,26%,11%)", border: "1px solid rgba(255,255,255,0.07)" }}>
               <div className="mb-4 text-2xl">{emoji}</div>
               <h3 className="mb-2 text-sm font-semibold text-white">{title}</h3>
               <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>{desc}</p>
