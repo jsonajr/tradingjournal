@@ -214,9 +214,6 @@ export function DashboardStats({
               className="rounded-md border border-input bg-background px-2 py-1 text-xs" />
           </div>
         )}
-        {trades.length !== allTrades.length && (
-          <span className="text-xs text-muted-foreground ml-1">{trades.length} of {allTrades.length} trades</span>
-        )}
       </div>
 
       {/* ── Stats grid ── */}
