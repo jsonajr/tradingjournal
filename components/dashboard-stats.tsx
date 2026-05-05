@@ -156,7 +156,7 @@ export function DashboardStats({
         {ACCOUNT_TABS.map(tab => {
           const isActive = acctTab === tab.type;
           // Count trades for this type
-          const count = allTrades.filter(t => t.account_id && new Set(accounts.filter(a => (a.type ?? "live") === tab.type).map(a => a.id)).has(t.account_id)).length;
+          const count = accounts.filter(a => (a.type ?? "live") === tab.type).length;
 
           return (
             <button
