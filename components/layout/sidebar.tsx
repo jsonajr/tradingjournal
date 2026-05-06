@@ -12,8 +12,8 @@ import type { Profile } from "@/lib/auth";
 const NAV = [
   { href: "/dashboard",        label: "Dashboard",               icon: LayoutDashboard },
   { href: "/trades",           label: "Trades",                  icon: List },
-  { href: "/eval",             label: "Prop Expenses & Payouts", icon: DollarSign },
   { href: "/journal/calendar", label: "Playbook Calendar",       icon: CalendarDays },
+  { href: "/eval",             label: "Prop Expenses & Payouts", icon: DollarSign },
   { href: "/strategies",       label: "Strategies",              icon: BookOpen },
   { href: "/insights",         label: "Insights",                icon: BarChart2 },
   { href: "/settings",         label: "Settings",                icon: Settings },

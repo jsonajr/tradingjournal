@@ -10,8 +10,9 @@ export default async function CalendarPage() {
 
   const [{ data: entries }, { data: trades }] = await Promise.all([
     sb.from("journal_entries").select("*").eq("user_id", user.id).order("entry_date", { ascending: false }).limit(365),
-    sb.from("trades").select("trade_date, pnl, commission").eq("user_id", user.id).order("trade_date", { ascending: false }).limit(2000),
+    sb.from("trades").select("trade_date, pnl, commission, account_id, accounts(type)").eq("user_id", user.id).order("trade_date", { ascending: false }).limit(2000),
   ]);
 
-  return <CalendarClient initialEntries={entries ?? []} trades={trades ?? []} />;
+  const { data: accounts } = await sb.from("accounts").select("id, type").eq("user_id", user.id);
+  return <CalendarClient initialEntries={entries ?? []} trades={trades ?? []} accounts={accounts ?? []} />;
 }

@@ -107,6 +107,15 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
     setAccountDialogOpen(false);
     router.refresh();
   }
+
+  async function toggleAccountBlown(id: string, currentlyBlown: boolean) {
+    const newStatus = currentlyBlown ? "active" : "failed";
+    const { error } = await supabase.from("accounts").update({ status: newStatus }).eq("id", id);
+    if (error) { toast.error("Failed to update"); return; }
+    setAccounts(accounts.map((a) => a.id === id ? { ...a, status: newStatus } : a));
+    toast.success(currentlyBlown ? "Account restored to active" : "Account marked as blown 💥");
+  }
+
   async function deleteAccount(id: string) {
     if (!confirm("Remove this account? Its trades will be unlinked but not deleted.")) return;
     const { error } = await supabase.from("accounts").delete().eq("id", id);
@@ -234,13 +243,16 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
               <div className="space-y-3">
                 {accounts.map((a) => (
                   <div key={a.id} className="flex flex-wrap items-center gap-3 rounded-md border p-3">
-                    <div className={cn("flex h-9 w-9 items-center justify-center rounded-md text-sm font-bold",
-                      a.type === "funded" ? "bg-green-500/15 text-green-500" :
-                      a.type === "eval"   ? "bg-blue-500/15 text-blue-500"   :
-                      a.type === "live"   ? "bg-amber-500/15 text-amber-500" :
-                      "bg-primary/15 text-primary",
-                    )}>
-                      {a.type === "funded" ? "F" : a.type === "eval" ? "E" : a.type === "live" ? "L" : "PA"}
+                    <div className="relative">
+                      <div className={cn("flex h-9 w-9 items-center justify-center rounded-md text-sm font-bold",
+                        a.status === "failed" ? "bg-red-500/15 text-red-500 opacity-60" :
+                        a.type === "funded" ? "bg-green-500/15 text-green-500" :
+                        a.type === "eval"   ? "bg-blue-500/15 text-blue-500"   :
+                        a.type === "live"   ? "bg-amber-500/15 text-amber-500" :
+                        "bg-primary/15 text-primary",
+                      )}>
+                        {a.status === "failed" ? "💥" : a.type === "funded" ? "F" : a.type === "eval" ? "E" : a.type === "live" ? "L" : "PA"}
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold">{a.name}</div>
@@ -248,6 +260,17 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
                     </div>
                     {a.balance && <span className="text-sm font-bold text-green-500">{a.balance}</span>}
                     <Badge variant={a.status === "active" ? "success" : a.status === "passed" ? "default" : a.status === "failed" ? "destructive" : "secondary"}>{a.status ?? "active"}</Badge>
+                    {(a.type === "eval" || a.type === "funded") && (
+                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={a.status === "failed"}
+                          onChange={() => toggleAccountBlown(a.id, a.status === "failed")}
+                          className="h-4 w-4 rounded border-input accent-red-500"
+                        />
+                        <span className="text-xs text-muted-foreground">Blown</span>
+                      </label>
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => openEditAccount(a)}>Edit</Button>
                     <Button size="icon" variant="ghost" onClick={() => deleteAccount(a.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                   </div>
@@ -504,9 +527,22 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
             <div className="space-y-1.5"><Label>Platform</Label><Input value={editingAccount.platform ?? ""} onChange={(e) => setEditingAccount({ ...editingAccount, platform: e.target.value })} placeholder="Tradovate" /></div>
             <div className="space-y-1.5"><Label>Balance</Label><Input value={editingAccount.balance ?? ""} onChange={(e) => setEditingAccount({ ...editingAccount, balance: e.target.value })} placeholder="$52,400" /></div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setAccountDialogOpen(false)}>Cancel</Button>
-            <Button onClick={saveAccount}>{editingAccount.id ? "Save" : "Add"}</Button>
+          <DialogFooter className="flex sm:justify-between">
+            {editingAccount.id && (editingAccount.type === "eval" || editingAccount.type === "funded") && (
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={editingAccount.status === "failed"}
+                  onChange={() => setEditingAccount({ ...editingAccount, status: editingAccount.status === "failed" ? "active" : "failed" })}
+                  className="h-4 w-4 rounded border-input accent-red-500"
+                />
+                <span className="text-sm text-muted-foreground">Blown</span>
+              </label>
+            )}
+            <div className="flex gap-2 sm:ml-auto">
+              <Button variant="ghost" onClick={() => setAccountDialogOpen(false)}>Cancel</Button>
+              <Button onClick={saveAccount}>{editingAccount.id ? "Save" : "Add"}</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

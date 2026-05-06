@@ -16,12 +16,13 @@ const SETUPS = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Openi
 const SESSIONS = ["London","NY Open","NY AM","NY PM","Asia"];
 const GRADES = ["A+","A","B","C","D"];
 
-type Account = { id: string; name: string; firm: string | null };
+type Account = { id: string; name: string; firm: string | null; type: string | null };
 
 export function NewTradeClient({ accounts }: { accounts: Account[] }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
   const [saving, setSaving] = useState(false);
+  const [blownAccount, setBlownAccount] = useState(false);
   const [form, setForm] = useState({
     trade_date: today,
     account_id: accounts[0]?.id ?? "",
@@ -41,6 +42,9 @@ export function NewTradeClient({ accounts }: { accounts: Account[] }) {
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
+  const selectedAccount = accounts.find((a) => a.id === form.account_id);
+  const showBlownToggle = selectedAccount?.type === "eval" || selectedAccount?.type === "funded";
+
   async function saveTrade() {
     if (!form.account_id) { toast.error("Select an account"); return; }
     if (!form.pnl) { toast.error("Enter P&L"); return; }
@@ -56,11 +60,22 @@ export function NewTradeClient({ accounts }: { accounts: Account[] }) {
         exit_price: parseFloat(form.exit_price) || null,
         stop_price: parseFloat(form.stop_price) || null,
         commission: parseFloat(form.commission) || 0,
+        blown_account: blownAccount,
       }),
     });
     setSaving(false);
     if (!res.ok) { const d = await res.json(); toast.error(d.error ?? "Failed"); return; }
-    toast.success("Trade saved!");
+
+    // If blown, also mark the account as failed
+    if (blownAccount && form.account_id) {
+      await fetch("/api/accounts/status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: form.account_id, status: "failed" }),
+      });
+    }
+
+    toast.success(blownAccount ? "Trade saved — account marked blown 💥" : "Trade saved!");
     router.push("/trades");
     router.refresh();
   }
@@ -92,7 +107,7 @@ export function NewTradeClient({ accounts }: { accounts: Account[] }) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Date"><Input type="date" value={form.trade_date} onChange={(e) => set("trade_date", e.target.value)} /></Field>
             <Field label="Account">
-              <Select value={form.account_id} onValueChange={(v) => set("account_id", v)}>
+              <Select value={form.account_id} onValueChange={(v) => { set("account_id", v); setBlownAccount(false); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}{a.firm ? ` (${a.firm})` : ""}</SelectItem>)}</SelectContent>
               </Select>
@@ -136,9 +151,26 @@ export function NewTradeClient({ accounts }: { accounts: Account[] }) {
             <div className="sm:col-span-2">
               <Field label="Notes"><Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Execution notes, mistakes, what you did well..." className="min-h-[80px]" /></Field>
             </div>
+
+            {/* Blown account checkbox — only shown for eval/funded accounts */}
+            {showBlownToggle && (
+              <div className="sm:col-span-2">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={blownAccount}
+                    onChange={(e) => setBlownAccount(e.target.checked)}
+                    className="h-4 w-4 rounded border-input accent-red-500"
+                  />
+                  <span className="text-sm text-muted-foreground">This trade blew the account <span className="text-xs">(marks account as Failed)</span></span>
+                </label>
+              </div>
+            )}
           </div>
           <div className="mt-6 flex gap-3">
-            <Button onClick={saveTrade} disabled={saving} className="flex-1 sm:flex-none">{saving ? "Saving..." : "Save Trade"}</Button>
+            <Button onClick={saveTrade} disabled={saving} className="flex-1 sm:flex-none">
+              {saving ? "Saving..." : "Save Trade"}
+            </Button>
             <Button variant="outline" asChild><Link href="/trades">Cancel</Link></Button>
           </div>
         </CardContent>

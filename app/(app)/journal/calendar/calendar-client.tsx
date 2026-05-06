@@ -20,8 +20,15 @@ type Entry = {
   setups: string[] | null; sessions: string[] | null;
   rules_followed: boolean | null; improvement: string | null; tags: string[] | null;
 };
-type TradeMini = { trade_date: string; pnl: number; commission: number };
+type TradeMini = { trade_date: string; pnl: number; commission: number; account_id?: string | null; accounts?: { type?: string | null } | { type?: string | null }[] | null };
 type DayStats = { pnl: number; count: number };
+type AccountFilterType = "all" | "eval" | "funded" | "live";
+const ACCT_TABS: { value: AccountFilterType; label: string; activeClass: string }[] = [
+  { value: "all",    label: "All",    activeClass: "bg-primary/15 text-primary border-primary/30" },
+  { value: "eval",   label: "Eval",   activeClass: "bg-amber-500/15 text-amber-500 border-amber-500/30" },
+  { value: "funded", label: "Funded", activeClass: "bg-blue-500/15 text-blue-500 border-blue-500/30" },
+  { value: "live",   label: "Live",   activeClass: "bg-green-500/15 text-green-500 border-green-500/30" },
+];
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -51,7 +58,7 @@ function fmtPnlCents(pnl: number): string {
   return sign + "$" + Math.abs(pnl).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export function CalendarClient({ initialEntries, trades }: { initialEntries: Entry[]; trades: TradeMini[] }) {
+export function CalendarClient({ initialEntries, trades, accounts }: { initialEntries: Entry[]; trades: TradeMini[]; accounts: { id: string; type: string | null }[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [entries, setEntries] = useState(initialEntries);
@@ -67,17 +74,29 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
     return null;
   });
   const [editorOpen, setEditorOpen] = useState(() => !!searchParams.get("edit"));
+  const [acctFilter, setAcctFilter] = useState<AccountFilterType>("all");
+
+  function getTradeType(t: TradeMini): string | null {
+    const acc = accounts.find((a) => a.id === t.account_id);
+    if (acc) return acc.type;
+    const joined = Array.isArray(t.accounts) ? t.accounts[0] : t.accounts;
+    return (joined as any)?.type ?? null;
+  }
+
+  const filteredTrades = acctFilter === "all" ? trades : trades.filter((t) => getTradeType(t) === acctFilter);
+
+  const availableTypes = new Set(trades.map((t) => getTradeType(t) ?? ""));
 
   const entryByDate = useMemo(() => { const m: Record<string, Entry> = {}; entries.forEach((e) => { m[e.entry_date] = e; }); return m; }, [entries]);
   const statsByDate = useMemo(() => {
     const m: Record<string, DayStats> = {};
-    trades.forEach((t) => {
+    filteredTrades.forEach((t) => {
       if (!m[t.trade_date]) m[t.trade_date] = { pnl: 0, count: 0 };
       m[t.trade_date].pnl += t.pnl - t.commission;
       m[t.trade_date].count += 1;
     });
     return m;
-  }, [trades]);
+  }, [filteredTrades]);
   const sortedList = useMemo(() => [...entries].sort((a, b) => b.entry_date.localeCompare(a.entry_date)), [entries]);
 
   const streak = useMemo(() => calcStreak(entries), [entries]);
@@ -143,6 +162,28 @@ export function CalendarClient({ initialEntries, trades }: { initialEntries: Ent
           <Button size="sm" variant={view === "list" ? "default" : "outline"} onClick={() => setView("list")}><List className="mr-1 h-3.5 w-3.5" />List</Button>
           <Button size="sm" onClick={() => openEntry(today)}><Plus className="mr-1 h-3.5 w-3.5" />New Entry</Button>
         </div>
+      </div>
+
+      {/* Account type pill toggle */}
+      <div className="mb-4 flex items-center gap-1.5 flex-wrap">
+        {ACCT_TABS.filter((tab) => tab.value === "all" || availableTypes.has(tab.value)).map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setAcctFilter(tab.value)}
+            className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-all ${
+              acctFilter === tab.value
+                ? tab.activeClass
+                : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+            }`}
+          >
+            {tab.label}
+            {tab.value !== "all" && (
+              <span className="ml-1.5 opacity-60">
+                {trades.filter((t) => getTradeType(t) === tab.value).length}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {view === "cal" && (

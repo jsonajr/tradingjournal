@@ -17,7 +17,7 @@ type JournalEntry = {
   id: string; entry_date: string; title: string | null;
   bias: string | null; notes: string | null;
 };
-type Account = { id: string; name: string; type: string | null };
+type Account = { id: string; name: string; type: string | null; status: string | null };
 
 const PRESETS = [
   { label: "Today", days: 0 },
@@ -70,6 +70,19 @@ export function DashboardStats({
   const accountsOfType = useMemo(() => {
     return accounts.filter(a => (a.type ?? "live") === acctTab);
   }, [accounts, acctTab]);
+
+
+  // ── Blown/active account stats (for eval/funded tabs) ─────────────────────
+  const acctStats = useMemo(() => {
+    const accs = accountsOfType;
+    const active = accs.filter(a => a.status !== "failed" && a.status !== "withdrawn" && a.status !== "inactive");
+    const blown  = accs.filter(a => a.status === "failed");
+    const blownTrades = allTrades.filter(t => {
+      const acc = accounts.find(a => a.id === t.account_id);
+      return acc?.type === acctTab && acc?.status === "failed";
+    });
+    return { total: accs.length, active: active.length, blown: blown.length, blownTrades: blownTrades.length };
+  }, [accountsOfType, allTrades, accounts, acctTab]);
 
   const accountIds = useMemo(
     () => new Set(accountsOfType.map(a => a.id)),
@@ -180,6 +193,30 @@ export function DashboardStats({
           );
         })}
       </div>
+
+
+      {/* ── Blown / Active account stats ── */}
+      {(acctTab === "eval" || acctTab === "funded") && acctStats.total > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-1.5">
+            <div className="h-2 w-2 rounded-full bg-green-500" />
+            <span className="text-xs font-semibold text-green-500">{acctStats.active} Active</span>
+          </div>
+          {acctStats.blown > 0 && (
+            <div className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5">
+              <span className="text-sm leading-none">💥</span>
+              <span className="text-xs font-semibold text-red-500">{acctStats.blown} Blown</span>
+            </div>
+          )}
+          {acctStats.total > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {acctStats.blown > 0
+                ? `${Math.round((acctStats.active / acctStats.total) * 100)}% survival rate`
+                : `${acctStats.total} ${acctTab} account${acctStats.total > 1 ? "s" : ""}`}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* ── Date range filter ── */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
