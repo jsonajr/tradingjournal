@@ -113,15 +113,7 @@ export function CalendarClient({ initialEntries, trades, accounts }: { initialEn
   while (cells.length % 7 !== 0) cells.push({ day: cells.length - firstDay - daysInMonth + 1, cur: false });
 
   function openEntry(dateStr: string) {
-    const existing = entryByDate[dateStr];
-    if (existing) {
-      // Navigate to full journal day page
-      router.push(`/journal/calendar/${dateStr}`);
-      return;
-    }
-    // No entry yet — open the editor dialog
-    setEditing({ id: "", entry_date: dateStr, title: null, bias: null, mood: null, rating: null, plan: null, notes: null, setups: [], sessions: [], rules_followed: null, improvement: null, tags: [] });
-    setEditorOpen(true);
+    router.push(`/journal/calendar/${dateStr}`);
   }
 
   async function saveEntry() {
