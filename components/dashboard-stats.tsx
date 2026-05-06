@@ -295,7 +295,7 @@ export function DashboardStats({
         </CardContent></Card>
 
         <Card><CardContent className="p-3 md:p-4">
-          <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best DOW</div>
+          <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best Day Of Week</div>
           <div className="text-sm sm:text-base md:text-2xl font-black leading-tight text-primary">
             {mostProfitableDay ? mostProfitableDay[0].slice(0, 3) : "—"}
           </div>
