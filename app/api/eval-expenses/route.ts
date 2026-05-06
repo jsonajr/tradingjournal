@@ -39,3 +39,19 @@ export async function DELETE(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
+export async function PATCH(req: NextRequest) {
+  const { user } = await requireRole(["user", "moderator", "admin"]);
+  const sb = await createClient();
+  const body = await req.json();
+  const { id } = body;
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  const { data, error } = await sb
+    .from("eval_expenses")
+    .update({ date: body.date, type: body.type, firm: body.firm || null, amount: body.amount, note: body.note || null })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
