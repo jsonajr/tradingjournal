@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PreTradeCheck } from "@/components/journal/pre-trade-check";
 import { TrendingUp, TrendingDown, Upload, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -28,8 +27,6 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
   const today = new Date().toISOString().split("T")[0];
 
   // Step 1: pre-trade check
-  const [checkOpen, setCheckOpen] = useState(false);
-  const [checkDirection, setCheckDirection] = useState<"Long" | "Short">("Long");
 
   // Step 2: trade form
   const [open, setOpen] = useState(false);
@@ -58,18 +55,6 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
   function openFor(dir: "Long" | "Short") {
     setForm((f) => ({ ...f, direction: dir, trade_date: today }));
     setTab("manual");
-    if (popupEnabled) {
-      // Step 1: check yourself before logging
-      setCheckDirection(dir);
-      setCheckOpen(true);
-    } else {
-      setOpen(true);
-    }
-  }
-
-  function onCheckPassed() {
-    // Step 2: check passed — now open the trade entry form
-    setCheckOpen(false);
     setOpen(true);
   }
 
@@ -154,12 +139,7 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
       </div>
 
       {/* Step 1: Pre-trade check */}
-      <PreTradeCheck
-        open={checkOpen}
-        direction={checkDirection}
-        onPass={onCheckPassed}
-        onCancel={() => setCheckOpen(false)}
-      />
+
 
       {/* Step 2: Trade entry form */}
       <Dialog open={open} onOpenChange={setOpen}>
