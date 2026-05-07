@@ -223,10 +223,11 @@ function getTradeAccountType(trade: Trade, accounts: Account[]): string | null {
   return (joined as any)?.type ?? null;
 }
 
-export function TradesClient({ initialTrades, accounts }: { initialTrades: Trade[]; accounts: Account[] }) {
+export function TradesClient({ initialTrades, accounts, autoCommission }: { initialTrades: Trade[]; accounts: Account[]; autoCommission: number | null }) {
   const router = useRouter();
   const [trades, setTrades] = useState(initialTrades);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [lastSelectedIdx, setLastSelectedIdx] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState<Trade | null>(null);
   const [activeTab, setActiveTab] = useState<AccountType>("all");
@@ -247,12 +248,42 @@ export function TradesClient({ initialTrades, accounts }: { initialTrades: Trade
 
   const allSelected = filteredTrades.length > 0 && filteredTrades.every((t) => selected.has(t.id));
 
-  function toggleSelect(id: string) {
+  function handleRowClick(e: React.MouseEvent, id: string, idx: number) {
+    if (e.shiftKey && lastSelectedIdx !== null) {
+      // Shift+click: select range
+      const from = Math.min(lastSelectedIdx, idx);
+      const to   = Math.max(lastSelectedIdx, idx);
+      setSelected(prev => {
+        const next = new Set(prev);
+        filteredTrades.slice(from, to + 1).forEach(t => next.add(t.id));
+        return next;
+      });
+    } else if (e.ctrlKey || e.metaKey) {
+      // Ctrl/Cmd+click: toggle individual
+      setSelected(prev => {
+        const next = new Set(prev);
+        next.has(id) ? next.delete(id) : next.add(id);
+        return next;
+      });
+      setLastSelectedIdx(idx);
+    } else {
+      // Plain click on checkbox column: toggle
+      setSelected(prev => {
+        const next = new Set(prev);
+        next.has(id) ? next.delete(id) : next.add(id);
+        return next;
+      });
+      setLastSelectedIdx(idx);
+    }
+  }
+
+  function toggleSelect(id: string, idx: number) {
     setSelected((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+    setLastSelectedIdx(idx);
   }
 
   function toggleAll() {
@@ -354,7 +385,8 @@ export function TradesClient({ initialTrades, accounts }: { initialTrades: Trade
 
       {selectedInView > 0 && (
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3">
-          <span className="text-sm font-semibold text-destructive">{selectedInView} trade{selectedInView > 1 ? "s" : ""} selected</span>
+  <span className="text-sm font-semibold text-destructive">{selectedInView} trade{selectedInView > 1 ? "s" : ""} selected</span>
+          <span className="text-xs text-muted-foreground hidden sm:inline">Shift+click to select range · Ctrl+click to multi-select</span>
           <Button size="sm" variant="destructive" onClick={deleteSelected} disabled={deleting}>
             <Trash2 className="mr-1 h-3.5 w-3.5" />{deleting ? "Deleting..." : "Delete Selected"}
           </Button>
@@ -393,7 +425,7 @@ export function TradesClient({ initialTrades, accounts }: { initialTrades: Trade
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTrades.map((t) => {
+              {filteredTrades.map((t, idx) => {
                 const net = (t.pnl ?? 0) - (t.commission ?? 0);
                 const isSelected = selected.has(t.id);
                 return (
@@ -402,11 +434,16 @@ export function TradesClient({ initialTrades, accounts }: { initialTrades: Trade
                     className={`cursor-pointer hover:bg-accent/50 ${isSelected ? "bg-primary/5" : ""}`}
                     onClick={(e) => {
                       if ((e.target as HTMLElement).closest("button")) return;
+                      if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        handleRowClick(e, t.id, idx);
+                        return;
+                      }
                       router.push(`/journal/${t.id}`);
                     }}
                   >
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => toggleSelect(t.id)} className="flex items-center justify-center p-1">
+                      <button onClick={(e) => { e.stopPropagation(); toggleSelect(t.id, idx); }} className="flex items-center justify-center p-1">
                         {isSelected
                           ? <CheckSquare className="h-4 w-4 text-primary" />
                           : <Square className="h-4 w-4 text-muted-foreground" />}

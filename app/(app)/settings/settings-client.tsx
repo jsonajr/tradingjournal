@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import type { Profile } from "@/lib/auth";
 
 type Account = { id: string; user_id: string; name: string; type: string; firm: string | null; size: string | null; platform: string | null; status: string | null; balance: string | null; start_date: string | null; notes: string | null };
-type UserSettings = { user_id: string; timezone: string; default_currency: string; show_commissions: boolean; accent_color: string; notification_email: boolean; notification_in_app: boolean; post_trade_popup_enabled: boolean } | null;
+type UserSettings = { user_id: string; timezone: string; default_currency: string; show_commissions: boolean; accent_color: string; notification_email: boolean; notification_in_app: boolean; post_trade_popup_enabled: boolean; auto_commission: number | null } | null;
 type Subscription = { plan: string; status: string; current_period_end: string | null; cancel_at_period_end: boolean } | null;
 
 export function SettingsClient({ profile, accounts: initialAccounts, settings, subscription }: { profile: Profile; accounts: Account[]; settings: UserSettings; subscription: Subscription }) {
@@ -57,6 +57,7 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
   const [currency, setCurrency] = useState(settings?.default_currency ?? "USD");
   const [language, setLanguage] = useState((settings as any)?.language ?? "en");
   const [postTradePopup, setPostTradePopup] = useState(settings?.post_trade_popup_enabled ?? true);
+  const [autoCommission, setAutoCommission] = useState<string>(settings?.auto_commission != null ? String(settings.auto_commission) : "");
 
   async function saveProfile() {
     setSavingProfile(true);
@@ -68,7 +69,8 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
   }
 
   async function savePreferences() {
-    const { error } = await supabase.from("user_settings").upsert({ user_id: profile.id, timezone: tz, default_currency: currency, post_trade_popup_enabled: postTradePopup, language });
+    const commVal = autoCommission !== "" ? parseFloat(autoCommission) : null;
+    const { error } = await supabase.from("user_settings").upsert({ user_id: profile.id, timezone: tz, default_currency: currency, post_trade_popup_enabled: postTradePopup, language, auto_commission: commVal });
     if (error) { toast.error(error.message); return; }
     toast.success("Preferences saved");
     router.refresh();

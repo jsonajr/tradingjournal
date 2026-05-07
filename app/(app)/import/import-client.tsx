@@ -13,7 +13,7 @@ import { Upload, FileText } from "lucide-react";
 type Account = { id: string; name: string; firm: string | null };
 
 const PLATFORM_INFO: Record<string, string> = {
-  tradovate: "Tradovate: Account → Reports → Trade History → Export CSV. Columns: TradeDate, Symbol, B/S, Qty, Price, Commission, P&L.",
+  tradovate: "Tradovate: Go to Account → Reports → Performance → Export CSV. Use the Performance report — not Fills or Orders.",
   projectx:  "ProjectX: Reports → Trade History → Download CSV. Columns: Date, Instrument, Side, Quantity, AvgPrice, Pnl, Fee.",
   generic:   "Generic CSV headers: date, symbol, direction, contracts, entry, exit, pnl, commission, setup, grade.",
 };

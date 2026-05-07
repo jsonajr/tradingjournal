@@ -18,7 +18,7 @@ const GRADES = ["A+","A","B","C","D"];
 
 type Account = { id: string; name: string; firm: string | null; type: string | null };
 
-export function NewTradeClient({ accounts }: { accounts: Account[] }) {
+export function NewTradeClient({ accounts, autoCommission }: { accounts: Account[]; autoCommission: number | null }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
   const [saving, setSaving] = useState(false);
@@ -33,7 +33,7 @@ export function NewTradeClient({ accounts }: { accounts: Account[] }) {
     entry_price: "",
     exit_price: "",
     stop_price: "",
-    commission: "4.00",
+    commission: autoCommission != null ? String(autoCommission) : "4.00",
     setup: "Trend Follow",
     session: "NY AM",
     grade: "A",
