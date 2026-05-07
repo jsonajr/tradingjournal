@@ -104,7 +104,7 @@ function parseFills(lines: string[], headers: string[]): ParsedTrade[] {
       .filter((f) => f.pnl !== 0)
       .map((f) => ({
         trade_date:  f.date,
-        symbol:      f.symbol,
+        symbol:      cleanSymbol(f.symbol),
         direction:   dirOf(f.side),
         contracts:   f.qty,
         entry_price: 0,
@@ -143,7 +143,7 @@ function parseFills(lines: string[], headers: string[]): ParsedTrade[] {
         : -pts * open.qty * ptVal(f.symbol);
       trades.push({
         trade_date:  f.date || open.date,
-        symbol:      f.symbol,
+        symbol:      cleanSymbol(f.symbol),
         direction:   dir,
         contracts:   open.qty,
         entry_price: open.price,
@@ -158,6 +158,65 @@ function parseFills(lines: string[], headers: string[]): ParsedTrade[] {
     } else {
       opens.push(f);
     }
+  }
+  return trades;
+}
+
+
+// Strip futures expiry from symbol — NQM6 -> NQ, ESZ5 -> ES, MESM6 -> MES
+function cleanSymbol(s: string): string {
+  return s.replace(/[FGHJKMNQUVXZ]\d{1,2}$/, "").trim();
+}
+
+// Tradovate Performance.csv — already has pnl per paired trade
+function parseTradovatePerformance(lines: string[], headers: string[]): ParsedTrade[] {
+  const gi = (...names: string[]) => {
+    for (const n of names) {
+      const i = headers.indexOf(n);
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+
+  const iSym    = gi("symbol");
+  const iQty    = gi("qty");
+  // Use exact match only — partial match hits _priceFormat which contains "price"
+  const iBuyP   = headers.indexOf("buyprice");
+  const iSellP  = headers.indexOf("sellprice");
+  const iPnl    = gi("pnl");
+  const iBuyTs  = gi("boughttimestamp");
+  const iSellTs = gi("soldtimestamp");
+
+  if (iSym < 0 || iPnl < 0) return [];
+
+  const trades: ParsedTrade[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitCsvLine(lines[i]).map(c => c.replace(/^"|"$/g, ""));
+    if (cols.length < 3) continue;
+    const rawSym  = cols[iSym]  ?? "";
+    const rawDate = (cols[iBuyTs] ?? cols[iSellTs] ?? "").split(" ")[0];
+    const pnl     = num(cols[iPnl]);
+    if (!rawSym || !rawDate) continue;
+
+    const buyP  = num(cols[iBuyP]);
+    const sellP = num(cols[iSellP]);
+    // If buyPrice < sellPrice it was a long, else short
+    const direction: "Long" | "Short" = buyP <= sellP ? "Long" : "Short";
+
+    trades.push({
+      trade_date:  formatDate(rawDate),
+      symbol:      cleanSymbol(rawSym),
+      direction,
+      contracts:   parseInt(cols[iQty] ?? "1") || 1,
+      entry_price: direction === "Long" ? buyP : sellP,
+      exit_price:  direction === "Long" ? sellP : buyP,
+      stop_price:  0,
+      pnl,
+      commission:  0,
+      r_multiple:  null,
+      setup:       "Import",
+      grade:       "—",
+    });
   }
   return trades;
 }
@@ -191,7 +250,7 @@ export function parseCSV(text: string, platform: Platform): ParsedTrade[] {
       const symbol = get(cols, "contractname", "symbol", "contract", "instrument");
       trade = {
         trade_date: formatDate(String(dateRaw).split(/[ T]/)[0]),
-        symbol,
+        symbol: cleanSymbol(symbol),
         direction: dirOf(get(cols, "type", "b/s", "side", "direction")),
         contracts: parseInt(get(cols, "size", "qty", "quantity", "contracts")) || 1,
         entry_price: num(get(cols, "entryprice", "entry", "price", "avgprice", "fill price", "fillprice", "avg price", "open price", "openprice")),
