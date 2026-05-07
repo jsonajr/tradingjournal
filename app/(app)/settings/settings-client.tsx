@@ -427,6 +427,29 @@ export function SettingsClient({ profile, accounts: initialAccounts, settings, s
                   )} />
                 </button>
               </div>
+            {/* Auto Commission */}
+            <div className="flex items-center justify-between rounded-xl border border-border p-4">
+              <div>
+                <div className="text-sm font-semibold">Auto Commission</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Pre-fills commission on every new trade. Leave blank to enter manually.</div>
+              </div>
+              <div className="flex items-center gap-2 ml-4 shrink-0">
+                <span className="text-sm text-muted-foreground">$</span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={autoCommission}
+                  onChange={(e) => setAutoCommission(e.target.value)}
+                  placeholder="e.g. 3.50"
+                  className="w-28 text-right"
+                />
+                <span className="text-xs text-muted-foreground">per trade</span>
+                {autoCommission !== "" && (
+                  <Button size="sm" variant="ghost" className="text-xs px-2" onClick={() => setAutoCommission("")}>Clear</Button>
+                )}
+              </div>
+            </div>
             <Button onClick={savePreferences}>Save Preferences</Button>
           </CardContent>
         </Card>
