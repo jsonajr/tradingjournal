@@ -239,6 +239,11 @@ export function parseCSV(text: string, platform: Platform): ParsedTrade[] {
     return "";
   };
 
+  // Detect Tradovate Performance.csv (has buyprice + sellprice + pnl columns)
+  if (headers.includes("buyprice") && headers.includes("sellprice") && headers.includes("pnl")) {
+    return parseTradovatePerformance(lines, headers);
+  }
+
   for (let i = 1; i < lines.length; i++) {
     const cols = splitCsvLine(lines[i]).map((c) => c.replace(/^"|"$/g, ""));
     if (cols.length < 3) continue;
