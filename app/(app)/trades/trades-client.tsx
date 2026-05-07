@@ -416,7 +416,6 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
                 <TableHead className="text-sm font-semibold">Qty</TableHead>
                 <TableHead className="text-sm font-semibold">Entry</TableHead>
                 <TableHead className="text-sm font-semibold">Exit</TableHead>
-                <TableHead className="text-sm font-semibold">Gross P&L</TableHead>
                 <TableHead className="text-sm font-semibold">Net P&L</TableHead>
                 <TableHead className="text-sm font-semibold">R</TableHead>
                 <TableHead className="text-sm font-semibold">Setup</TableHead>
@@ -460,9 +459,6 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
                     <TableCell className="text-sm">{t.contracts}</TableCell>
                     <TableCell className="text-sm">{t.entry_price ?? "—"}</TableCell>
                     <TableCell className="text-sm">{t.exit_price ?? "—"}</TableCell>
-                    <TableCell className={`text-base font-bold ${(t.pnl ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      {fmtMoney(t.pnl ?? 0)}
-                    </TableCell>
                     <TableCell className={`text-base font-bold ${net >= 0 ? "text-green-500" : "text-red-500"}`}>
                       {fmtMoney(net)}
                     </TableCell>
