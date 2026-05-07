@@ -14,6 +14,14 @@ export async function POST(request: NextRequest) {
   const parsed = parseCSV(csv, platform as Platform);
   if (!parsed.length) return NextResponse.json({ error: "No trades parsed. Check the CSV format." }, { status: 400 });
 
+  // Fetch auto_commission setting — used as fallback when CSV has no commission
+  const { data: userSettings } = await supabase
+    .from("user_settings")
+    .select("auto_commission")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const autoCommission: number | null = userSettings?.auto_commission ?? null;
+
   const rows = parsed.map((t) => ({
     user_id: user.id,
     account_id,
@@ -25,7 +33,8 @@ export async function POST(request: NextRequest) {
     exit_price: t.exit_price || null,
     stop_price: t.stop_price || null,
     pnl: t.pnl,
-    commission: t.commission,
+    // Use CSV commission if present, fall back to auto_commission setting
+    commission: t.commission > 0 ? t.commission : (autoCommission ?? 0),
     r_multiple: t.r_multiple,
     setup: t.setup,
     grade: t.grade,
