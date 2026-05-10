@@ -118,7 +118,7 @@ const SUGGESTED_QUESTIONS = [
   "Why am I losing money?",
 ];
 
-function AICoach({ trades, acctTab }: { trades: Trade[]; acctTab: string }) {
+function AICoach({ trades, acctTab }: { trades: Trade[]; acctTab: string | null }) {
   const [loading, setLoading]   = useState(false);
   const [insight, setInsight]   = useState("");
   const [question, setQuestion] = useState("");
