@@ -12,6 +12,7 @@ import { useState, useMemo, useRef } from "react";
 type Trade = {
   id: string; trade_date: string; symbol: string; direction: string;
   pnl: number; commission: number; r_multiple: number | null; account_id: string | null;
+  setup: string | null; session: string | null; grade: string | null;
 };
 type JournalEntry = {
   id: string; entry_date: string; title: string | null;
