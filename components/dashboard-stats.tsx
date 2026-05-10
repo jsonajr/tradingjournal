@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EquityChart } from "@/components/journal/equity-chart";
 import { fmtMoney } from "@/lib/utils";
-import { TrendingUp, BookOpen, Calendar } from "lucide-react";
+import { TrendingUp, BookOpen, Calendar, Sparkles, Send, RefreshCw } from "lucide-react";
+import { useState, useRef } from "react";
 
 type Trade = {
   id: string; trade_date: string; symbol: string; direction: string;
@@ -38,9 +39,194 @@ const ACCOUNT_TABS: { label: string; type: string | null }[] = [
 function fmtCompact(n: number, signed = false): string {
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : signed ? "+" : "";
-  if (abs >= 100000) return `${sign}$${(abs / 1000).toFixed(0)}k`;
-  if (abs >= 10000)  return `${sign}$${(abs / 1000).toFixed(1)}k`;
+  if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(1)}k`;
   return `${sign}${fmtMoney(abs)}`;
+}
+
+
+/* ── AI Trade Coach ─────────────────────────────────────────────────────── */
+function buildStats(trades: Trade[]) {
+  if (trades.length === 0) return null;
+  const wins   = trades.filter(t => t.pnl > 0);
+  const losses = trades.filter(t => t.pnl < 0);
+  const net    = trades.reduce((s, t) => s + t.pnl - t.commission, 0);
+
+  const bySetup: Record<string, { count: number; wins: number; pnl: number }> = {};
+  trades.forEach(t => {
+    if (!t.setup || t.setup === "Import") return;
+    if (!bySetup[t.setup]) bySetup[t.setup] = { count: 0, wins: 0, pnl: 0 };
+    bySetup[t.setup].count++;
+    bySetup[t.setup].pnl += t.pnl - t.commission;
+    if (t.pnl > 0) bySetup[t.setup].wins++;
+  });
+
+  const bySession: Record<string, { count: number; wins: number; pnl: number }> = {};
+  trades.forEach(t => {
+    if (!t.session) return;
+    if (!bySession[t.session]) bySession[t.session] = { count: 0, wins: 0, pnl: 0 };
+    bySession[t.session].count++;
+    bySession[t.session].pnl += t.pnl - t.commission;
+    if (t.pnl > 0) bySession[t.session].wins++;
+  });
+
+  const byGrade: Record<string, { count: number; wins: number; pnl: number }> = {};
+  trades.forEach(t => {
+    if (!t.grade || t.grade === "—") return;
+    if (!byGrade[t.grade]) byGrade[t.grade] = { count: 0, wins: 0, pnl: 0 };
+    byGrade[t.grade].count++;
+    byGrade[t.grade].pnl += t.pnl - t.commission;
+    if (t.pnl > 0) byGrade[t.grade].wins++;
+  });
+
+  const byDow: Record<string, { count: number; wins: number; pnl: number }> = {};
+  trades.forEach(t => {
+    const [y, m, d] = t.trade_date.split("-").map(Number);
+    const dow = new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "long" });
+    if (!byDow[dow]) byDow[dow] = { count: 0, wins: 0, pnl: 0 };
+    byDow[dow].count++;
+    byDow[dow].pnl += t.pnl - t.commission;
+    if (t.pnl > 0) byDow[dow].wins++;
+  });
+
+  return {
+    totalTrades: trades.length,
+    winRate: Math.round((wins.length / trades.length) * 100),
+    netPnl: Math.round(net * 100) / 100,
+    avgWin: wins.length ? Math.round(wins.reduce((s, t) => s + t.pnl, 0) / wins.length * 100) / 100 : 0,
+    avgLoss: losses.length ? Math.round(losses.reduce((s, t) => s + t.pnl, 0) / losses.length * 100) / 100 : 0,
+    profitFactor: losses.length ? Math.round((wins.reduce((s, t) => s + t.pnl, 0) / Math.abs(losses.reduce((s, t) => s + t.pnl, 0))) * 100) / 100 : null,
+    bySetup: Object.entries(bySetup).sort((a, b) => b[1].pnl - a[1].pnl).map(([setup, v]) => ({
+      setup, ...v, winRate: Math.round(v.wins / v.count * 100)
+    })),
+    bySession: Object.entries(bySession).sort((a, b) => b[1].pnl - a[1].pnl).map(([session, v]) => ({
+      session, ...v, winRate: Math.round(v.wins / v.count * 100)
+    })),
+    byGrade: Object.entries(byGrade).sort((a, b) => a[0].localeCompare(b[0])).map(([grade, v]) => ({
+      grade, ...v, winRate: Math.round(v.wins / v.count * 100)
+    })),
+    byDayOfWeek: Object.entries(byDow).map(([day, v]) => ({
+      day, ...v, winRate: Math.round(v.wins / v.count * 100)
+    })),
+  };
+}
+
+const SUGGESTED_QUESTIONS = [
+  "What is my biggest weakness?",
+  "Which setup should I stop trading?",
+  "What time of day should I avoid?",
+  "How can I improve my win rate?",
+  "Why am I losing money?",
+];
+
+function AICoach({ trades, acctTab }: { trades: Trade[]; acctTab: string }) {
+  const [loading, setLoading]   = useState(false);
+  const [insight, setInsight]   = useState("");
+  const [question, setQuestion] = useState("");
+  const [error, setError]       = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function ask(q?: string) {
+    const stats = buildStats(trades);
+    if (!stats) return;
+    const finalQ = q ?? question.trim();
+    setLoading(true);
+    setInsight("");
+    setError("");
+    try {
+      const res = await fetch("/api/ai-insights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: finalQ || null, tradeStats: stats }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Something went wrong"); return; }
+      setInsight(data.insight);
+    } catch {
+      setError("Failed to connect. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (trades.length < 5) return null;
+
+  return (
+    <Card className="mb-4">
+      <CardHeader className="pb-2 pt-4 px-4">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          AI Trade Coach
+          {acctTab !== "all" && <Badge variant="outline" className="text-xs ml-1">{acctTab}</Badge>}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-4 pb-4 space-y-3">
+
+        {/* Suggested questions */}
+        {!insight && !loading && (
+          <div className="flex flex-wrap gap-1.5">
+            {SUGGESTED_QUESTIONS.map(q => (
+              <button
+                key={q}
+                onClick={() => { setQuestion(q); ask(q); }}
+                className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Input */}
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            value={question}
+            onChange={e => setQuestion(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && !loading && ask()}
+            placeholder="Ask anything about your trading..."
+            className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <button
+            onClick={() => ask()}
+            disabled={loading}
+            className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >
+            {loading
+              ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              : <Send className="h-3.5 w-3.5" />}
+            {loading ? "Analyzing..." : "Ask"}
+          </button>
+        </div>
+
+        {/* Response */}
+        {error && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>
+        )}
+        {insight && (
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <div className="flex items-start gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">{insight}</p>
+            </div>
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
+              <button
+                onClick={() => { setInsight(""); setQuestion(""); }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Ask another question
+              </button>
+              <button
+                onClick={() => ask()}
+                className="ml-auto text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+              >
+                <RefreshCw className="h-3 w-3" />Regenerate
+              </button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export function DashboardStats({
@@ -64,7 +250,21 @@ export function DashboardStats({
   const [customFrom, setCustomFrom] = useState("");
   const [customTo,   setCustomTo]   = useState("");
   const [showCustom, setShowCustom] = useState(false);
-  const [acctTab,    setAcctTab]    = useState<string | null>("eval"); // default to Eval
+  const defaultTab = useMemo(() => {
+    const types = ["eval", "funded", "live"] as const;
+    let best: string | null = null;
+    let bestPnl = -Infinity;
+    for (const type of types) {
+      const hasAccounts = accounts.some(a => a.type === type);
+      if (!hasAccounts) continue;
+      const pnl = allTrades
+        .filter(t => accounts.find(a => a.id === t.account_id)?.type === type)
+        .reduce((s, t) => s + t.pnl - t.commission, 0);
+      if (pnl > bestPnl) { bestPnl = pnl; best = type; }
+    }
+    return best ?? "eval";
+  }, [accounts, allTrades]);
+  const [acctTab, setAcctTab] = useState<string | null>(defaultTab);
 
   // ── Filter trades by account type ────────────────────────────────────────
   const accountsOfType = useMemo(() => {
@@ -295,7 +495,7 @@ export function DashboardStats({
         </CardContent></Card>
 
         <Card><CardContent className="p-3 md:p-4">
-          <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best Day Of Week</div>
+          <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 leading-tight">Best DOW</div>
           <div className="text-sm sm:text-base md:text-2xl font-black leading-tight text-primary">
             {mostProfitableDay ? mostProfitableDay[0].slice(0, 3) : "—"}
           </div>
@@ -304,6 +504,9 @@ export function DashboardStats({
           </div>
         </CardContent></Card>
       </div>
+
+      {/* ── AI Trade Coach ── */}
+      <AICoach trades={trades} acctTab={acctTab} />
 
       {/* ── Equity + Journal ── */}
       <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
@@ -352,14 +555,23 @@ export function DashboardStats({
               <TableHead>Dir</TableHead><TableHead>Net P&L</TableHead><TableHead>R</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {trades.slice(0, 10).map(tr => {
+              {(() => {
+                const seen = new Set<string>();
+                const unique = trades.filter(tr => {
+                  const key = `${tr.trade_date}-${tr.symbol}-${tr.direction}-${tr.pnl}`;
+                  if (seen.has(key)) return false;
+                  seen.add(key);
+                  return true;
+                }).slice(0, 10);
+                return unique;
+              })().map(tr => {
                 const net = tr.pnl - tr.commission;
                 return (
                   <TableRow key={tr.id}>
                     <TableCell className="text-xs">{tr.trade_date}</TableCell>
                     <TableCell className="font-semibold">{tr.symbol}</TableCell>
                     <TableCell><Badge className={tr.direction === "Long" ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}>{tr.direction}</Badge></TableCell>
-                    <TableCell className={`font-bold text-base ${net >= 0 ? "text-green-500" : "text-red-500"}`}>{fmtCompact(net, true)}</TableCell>
+                    <TableCell className={`font-bold text-base ${net >= 0 ? "text-green-500" : "text-red-500"}`}>{fmtMoney(net, true)}</TableCell>
                     <TableCell className="text-xs">{tr.r_multiple != null ? `${tr.r_multiple}R` : "—"}</TableCell>
                   </TableRow>
                 );
