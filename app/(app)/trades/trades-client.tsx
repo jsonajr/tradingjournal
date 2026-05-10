@@ -231,6 +231,7 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState<Trade | null>(null);
   const [activeTab, setActiveTab] = useState<AccountType>("all");
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
 
   // Determine which tabs actually have data
   const availableTabs = useMemo(() => {
@@ -239,12 +240,18 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
   }, [trades, accounts]);
 
   const filteredTrades = useMemo(() => {
-    if (activeTab === "all") return trades;
-    return trades.filter((t) => {
-      const type = getTradeAccountType(t, accounts);
-      return type === activeTab;
-    });
-  }, [trades, activeTab, accounts]);
+    let result = trades;
+    if (activeTab !== "all") {
+      result = result.filter((t) => {
+        const type = getTradeAccountType(t, accounts);
+        return type === activeTab;
+      });
+    }
+    if (selectedAccountId !== "all") {
+      result = result.filter((t) => t.account_id === selectedAccountId);
+    }
+    return result;
+  }, [trades, activeTab, selectedAccountId, accounts]);
 
   const allSelected = filteredTrades.length > 0 && filteredTrades.every((t) => selected.has(t.id));
 
@@ -353,7 +360,11 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold md:text-4xl">Trade History</h1>
-          <p className="text-sm text-muted-foreground">{filteredTrades.length} trades{activeTab !== "all" ? ` · ${activeTab}` : ""}</p>
+          <p className="text-sm text-muted-foreground">
+            {filteredTrades.length} trades
+            {activeTab !== "all" ? ` · ${activeTab}` : ""}
+            {selectedAccountId !== "all" ? ` · ${accounts.find(a => a.id === selectedAccountId)?.name ?? ""}` : ""}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild><Link href="/import"><Upload className="mr-1 h-4 w-4" />Import CSV</Link></Button>
@@ -362,11 +373,11 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
       </div>
 
       {/* Account type pill toggle */}
-      <div className="mb-5 flex items-center gap-1.5 flex-wrap">
+      <div className="mb-3 flex items-center gap-1.5 flex-wrap">
         {availableTabs.map((tab) => (
           <button
             key={tab.value}
-            onClick={() => setActiveTab(tab.value)}
+            onClick={() => { setActiveTab(tab.value); setSelectedAccountId("all"); }}
             className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-all ${
               activeTab === tab.value
                 ? tab.color
@@ -382,6 +393,35 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
           </button>
         ))}
       </div>
+
+      {/* Account dropdown filter */}
+      {accounts.length > 0 && (
+        <div className="mb-5 flex items-center gap-2">
+          <span className="text-xs text-muted-foreground shrink-0">Account:</span>
+          <select
+            value={selectedAccountId}
+            onChange={(e) => setSelectedAccountId(e.target.value)}
+            className="rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary max-w-xs"
+          >
+            <option value="all">All Accounts</option>
+            {accounts
+              .filter((a) => activeTab === "all" || a.type === activeTab)
+              .map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}{a.firm ? ` (${a.firm})` : ""}
+                </option>
+              ))}
+          </select>
+          {selectedAccountId !== "all" && (
+            <button
+              onClick={() => setSelectedAccountId("all")}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clear ✕
+            </button>
+          )}
+        </div>
+      )}
 
       {selectedInView > 0 && (
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3">
