@@ -223,6 +223,127 @@ function getTradeAccountType(trade: Trade, accounts: Account[]): string | null {
   return (joined as any)?.type ?? null;
 }
 
+
+/* ── Mass Edit Modal ─────────────────────────────────────────────────────── */
+function MassEditModal({ count, accounts, onClose, onSaved }: {
+  count: number;
+  accounts: Account[];
+  onClose: () => void;
+  onSaved: (patch: Record<string, any>) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    account_id: "",
+    setup:      "",
+    session:    "",
+    grade:      "",
+    commission: "",
+    notes:      "",
+  });
+
+  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  function save() {
+    // Only include fields the user actually filled in
+    const patch: Record<string, any> = {};
+    if (form.account_id) patch.account_id = form.account_id;
+    if (form.setup)      patch.setup      = form.setup === "__clear__" ? null : form.setup;
+    if (form.session)    patch.session    = form.session === "__clear__" ? null : form.session;
+    if (form.grade)      patch.grade      = form.grade === "__clear__" ? null : form.grade;
+    if (form.commission !== "") patch.commission = parseFloat(form.commission) || 0;
+    if (form.notes)      patch.notes      = form.notes;
+
+    if (Object.keys(patch).length === 0) {
+      toast.error("Fill in at least one field to update");
+      return;
+    }
+    onSaved(patch);
+  }
+
+  return (
+    <Dialog open onOpenChange={o => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span>Mass Edit</span>
+            <Badge variant="secondary">{count} trades</Badge>
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground -mt-2 mb-1">
+          Only the fields you fill in will be updated. Leave blank to keep existing values.
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase tracking-wide">Account</Label>
+            <Select value={form.account_id || "__none__"} onValueChange={v => set("account_id", v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="— keep existing —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— keep existing —</SelectItem>
+                {accounts.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.name}{a.firm ? ` (${a.firm})` : ""}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase tracking-wide">Commission ($)</Label>
+            <Input type="number" step="0.01" placeholder="— keep existing —" value={form.commission} onChange={e => set("commission", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase tracking-wide">Setup</Label>
+            <Select value={form.setup || "__none__"} onValueChange={v => set("setup", v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="— keep existing —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— keep existing —</SelectItem>
+                <SelectItem value="__clear__">Clear setup</SelectItem>
+                {["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other","ICT CISD","ICT Fair Value Gap","ICT Order Block","ICT Liquidity Sweep","ICT Optimal Trade Entry","ICT Breaker Block","ICT Power of 3"].map(s => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase tracking-wide">Session</Label>
+            <Select value={form.session || "__none__"} onValueChange={v => set("session", v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="— keep existing —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— keep existing —</SelectItem>
+                <SelectItem value="__clear__">Clear session</SelectItem>
+                {["London","NY Open","NY AM","NY PM","Asia"].map(s => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase tracking-wide">Grade</Label>
+            <Select value={form.grade || "__none__"} onValueChange={v => set("grade", v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="— keep existing —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— keep existing —</SelectItem>
+                <SelectItem value="__clear__">Clear grade</SelectItem>
+                {["A+","A","B","C","D"].map(s => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="sm:col-span-2 space-y-1.5">
+            <Label className="text-xs uppercase tracking-wide">Notes (appends to existing)</Label>
+            <Textarea value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Leave blank to keep existing notes..." className="min-h-[60px]" />
+          </div>
+        </div>
+        <DialogFooter className="mt-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={save} disabled={saving}>
+            {saving ? "Saving..." : `Update ${count} Trade${count > 1 ? "s" : ""}`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function TradesClient({ initialTrades, accounts, autoCommission }: { initialTrades: Trade[]; accounts: Account[]; autoCommission: number | null }) {
   const router = useRouter();
   const [trades, setTrades] = useState(initialTrades);
@@ -230,6 +351,7 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
   const [lastSelectedIdx, setLastSelectedIdx] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState<Trade | null>(null);
+  const [massEditing, setMassEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<AccountType>("all");
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
 
@@ -250,7 +372,12 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
     if (selectedAccountId !== "all") {
       result = result.filter((t) => t.account_id === selectedAccountId);
     }
-    return result;
+    // Sort: date desc, then group by symbol + pnl so copy-traded accounts stack together
+    return [...result].sort((a, b) => {
+      if (b.trade_date !== a.trade_date) return b.trade_date.localeCompare(a.trade_date);
+      if (a.symbol !== b.symbol) return a.symbol.localeCompare(b.symbol);
+      return b.pnl - a.pnl;
+    });
   }, [trades, activeTab, selectedAccountId, accounts]);
 
   const allSelected = filteredTrades.length > 0 && filteredTrades.every((t) => selected.has(t.id));
@@ -303,6 +430,36 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
     } else {
       setSelected((prev) => new Set([...prev, ...filteredTrades.map((t) => t.id)]));
     }
+  }
+
+  async function massEditSelected(patch: Record<string, any>) {
+    const ids = filteredTrades.filter(t => selected.has(t.id)).map(t => t.id);
+    if (ids.length === 0) return;
+    let failed = 0;
+    for (const id of ids) {
+      const trade = trades.find(t => t.id === id);
+      if (!trade) continue;
+      const res = await fetch("/api/trades/update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...trade, accounts: undefined, ...patch }),
+      });
+      if (!res.ok) failed++;
+    }
+    // Update local state
+    setTrades(prev => prev.map(t => {
+      if (!selected.has(t.id)) return t;
+      const updated = { ...t, ...patch };
+      if (patch.notes && t.notes && !patch.notes.startsWith(t.notes)) {
+        updated.notes = t.notes + "\n" + patch.notes;
+      }
+      return updated;
+    }));
+    setMassEditing(false);
+    setSelected(new Set());
+    if (failed) toast.error(`${failed} failed to update`);
+    else toast.success(`${ids.length} trade${ids.length > 1 ? "s" : ""} updated`);
+    router.refresh();
   }
 
   async function deleteSelected() {
@@ -424,9 +581,12 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
       )}
 
       {selectedInView > 0 && (
-        <div className="mb-4 flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3">
-  <span className="text-sm font-semibold text-destructive">{selectedInView} trade{selectedInView > 1 ? "s" : ""} selected</span>
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
+  <span className="text-sm font-semibold">{selectedInView} trade{selectedInView > 1 ? "s" : ""} selected</span>
           <span className="text-xs text-muted-foreground hidden sm:inline">Shift+click to select range · Ctrl+click to multi-select</span>
+          <Button size="sm" variant="outline" onClick={() => setMassEditing(true)}>
+            <Pencil className="mr-1 h-3.5 w-3.5" />Mass Edit
+          </Button>
           <Button size="sm" variant="destructive" onClick={deleteSelected} disabled={deleting}>
             <Trash2 className="mr-1 h-3.5 w-3.5" />{deleting ? "Deleting..." : "Delete Selected"}
           </Button>
@@ -539,6 +699,15 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
           </Table>
         </CardContent>
       </Card>
+
+      {massEditing && (
+        <MassEditModal
+          count={filteredTrades.filter(t => selected.has(t.id)).length}
+          accounts={accounts}
+          onClose={() => setMassEditing(false)}
+          onSaved={massEditSelected}
+        />
+      )}
 
       {editing && (
         <EditTradeModal

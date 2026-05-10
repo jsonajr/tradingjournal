@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -359,6 +359,11 @@ export function JournalDayClient({ entry: initialEntry, trades: initialTrades, a
   const [entryEditor, setEntryEditor] = useState(false);
   const [deleting, setDeleting]     = useState(false);
 
+  const sortedTrades = useMemo(() => [...trades].sort((a, b) => {
+    if (a.symbol !== b.symbol) return a.symbol.localeCompare(b.symbol);
+    return b.pnl - a.pnl;
+  }), [trades]);
+
   const totalPnl  = trades.reduce((s, t) => s + t.pnl - t.commission, 0);
   const grossPnl  = trades.reduce((s, t) => s + t.pnl, 0);
   const totalComm = trades.reduce((s, t) => s + t.commission, 0);
@@ -512,73 +517,6 @@ export function JournalDayClient({ entry: initialEntry, trades: initialTrades, a
         </div>
       )}
 
-      {/* ── Trades list ── */}
-      <Card className="mb-4">
-        <CardHeader className="pb-2 pt-4 px-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />Trades This Day
-            </CardTitle>
-            {trades.length > 0 && (
-              <div className="flex gap-3 text-xs">
-                <span className="text-green-500 font-semibold">{wins.length}W</span>
-                <span className="text-red-500 font-semibold">{losses.length}L</span>
-                <span className={cn("font-black", totalPnl >= 0 ? "text-green-500" : "text-red-500")}>{fmt(totalPnl)}</span>
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="px-4 pb-4">
-          {trades.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              No trades logged for this day —{" "}
-              <Link href="/trades/new" className="text-primary underline">log one now</Link>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {trades.map(t => {
-                const net = t.pnl - t.commission;
-                return (
-                  <div key={t.id} className={cn(
-                    "flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border p-3 transition-colors",
-                    net > 0 ? "border-green-500/20 bg-green-500/5" : net < 0 ? "border-red-500/20 bg-red-500/5" : "border-border"
-                  )}>
-                    <div className="flex items-center gap-2 min-w-[110px]">
-                      <Badge className={t.direction === "Long" ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}>
-                        {t.direction}
-                      </Badge>
-                      <span className="font-black text-base">{t.symbol}</span>
-                      {t.blown_account && <span title="Blew account" className="text-base leading-none">💥</span>}
-                    </div>
-                    <div className="flex flex-1 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span>{t.contracts} contract{t.contracts !== 1 ? "s" : ""}</span>
-                      {t.entry_price && <span>In: <span className="font-mono text-foreground">{t.entry_price}</span></span>}
-                      {t.exit_price  && <span>Out: <span className="font-mono text-foreground">{t.exit_price}</span></span>}
-                      {t.r_multiple  != null && <span className="font-medium text-primary">{t.r_multiple}R</span>}
-                      {t.setup   && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{t.setup}</Badge>}
-                      {t.session && <Badge variant="outline"   className="text-[10px] px-1.5 py-0">{t.session}</Badge>}
-                      {t.grade   && <Badge variant="outline"   className="text-[10px] px-1.5 py-0">{t.grade}</Badge>}
-                    </div>
-                    <div className="flex items-center gap-3 ml-auto">
-                      <div className="text-right">
-                        <div className={cn("font-black tabular-nums text-base", net >= 0 ? "text-green-500" : "text-red-500")}>{fmt(net)}</div>
-                        {t.commission > 0 && <div className="text-[10px] text-muted-foreground">-${t.commission.toFixed(2)} comm</div>}
-                      </div>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => setEditing(t)}>
-                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => deleteTrade(t.id)}>
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* ── Journal notes ── */}
       {entry && (
         <div className="grid gap-4 md:grid-cols-2">
@@ -632,6 +570,73 @@ export function JournalDayClient({ entry: initialEntry, trades: initialTrades, a
           )}
         </div>
       )}
+
+      {/* ── Trades this day ── */}
+      <Card className="mb-4">
+        <CardHeader className="pb-2 pt-4 px-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />Trades This Day
+            </CardTitle>
+            {trades.length > 0 && (
+              <div className="flex gap-3 text-xs">
+                <span className="text-green-500 font-semibold">{wins.length}W</span>
+                <span className="text-red-500 font-semibold">{losses.length}L</span>
+                <span className={cn("font-black", totalPnl >= 0 ? "text-green-500" : "text-red-500")}>{fmt(totalPnl)}</span>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          {trades.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              No trades logged for this day —{" "}
+              <Link href="/trades/new" className="text-primary underline">log one now</Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {sortedTrades.map(t => {
+                const net = t.pnl - t.commission;
+                return (
+                  <div key={t.id} className={cn(
+                    "flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border p-3 transition-colors",
+                    net > 0 ? "border-green-500/20 bg-green-500/5" : net < 0 ? "border-red-500/20 bg-red-500/5" : "border-border"
+                  )}>
+                    <div className="flex items-center gap-2 min-w-[110px]">
+                      <Badge className={t.direction === "Long" ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}>
+                        {t.direction}
+                      </Badge>
+                      <span className="font-black text-base">{t.symbol}</span>
+                      {t.blown_account && <span title="Blew account" className="text-base leading-none">💥</span>}
+                    </div>
+                    <div className="flex flex-1 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span>{t.contracts} contract{t.contracts !== 1 ? "s" : ""}</span>
+                      {t.entry_price && <span>In: <span className="font-mono text-foreground">{t.entry_price}</span></span>}
+                      {t.exit_price  && <span>Out: <span className="font-mono text-foreground">{t.exit_price}</span></span>}
+                      {t.r_multiple  != null && <span className="font-medium text-primary">{t.r_multiple}R</span>}
+                      {t.setup   && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{t.setup}</Badge>}
+                      {t.session && <Badge variant="outline"   className="text-[10px] px-1.5 py-0">{t.session}</Badge>}
+                      {t.grade   && <Badge variant="outline"   className="text-[10px] px-1.5 py-0">{t.grade}</Badge>}
+                    </div>
+                    <div className="flex items-center gap-3 ml-auto">
+                      <div className="text-right">
+                        <div className={cn("font-black tabular-nums text-base", net >= 0 ? "text-green-500" : "text-red-500")}>{fmt(net)}</div>
+                        {t.commission > 0 && <div className="text-[10px] text-muted-foreground">-${t.commission.toFixed(2)} comm</div>}
+                      </div>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => setEditing(t)}>
+                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => deleteTrade(t.id)}>
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* ── Modals ── */}
       {editing && (
