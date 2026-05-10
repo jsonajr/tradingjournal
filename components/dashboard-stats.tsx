@@ -1,5 +1,4 @@
 "use client";
-import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EquityChart } from "@/components/journal/equity-chart";
 import { fmtMoney } from "@/lib/utils";
 import { TrendingUp, BookOpen, Calendar, Sparkles, Send, RefreshCw } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 
 type Trade = {
   id: string; trade_date: string; symbol: string; direction: string;
@@ -250,7 +249,7 @@ export function DashboardStats({
   const [customFrom, setCustomFrom] = useState("");
   const [customTo,   setCustomTo]   = useState("");
   const [showCustom, setShowCustom] = useState(false);
-  const defaultTab = useMemo(() => {
+  const [acctTab, setAcctTab] = useState<string | null>(() => {
     const types = ["eval", "funded", "live"] as const;
     let best: string | null = null;
     let bestPnl = -Infinity;
@@ -263,8 +262,7 @@ export function DashboardStats({
       if (pnl > bestPnl) { bestPnl = pnl; best = type; }
     }
     return best ?? "eval";
-  }, [accounts, allTrades]);
-  const [acctTab, setAcctTab] = useState<string | null>(defaultTab);
+  });
 
   // ── Filter trades by account type ────────────────────────────────────────
   const accountsOfType = useMemo(() => {
