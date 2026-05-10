@@ -442,7 +442,7 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
       const res = await fetch("/api/trades/update", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, ...trade, accounts: undefined, ...patch }),
+        body: JSON.stringify({ ...trade, accounts: undefined, ...patch, id }),
       });
       if (!res.ok) failed++;
     }
