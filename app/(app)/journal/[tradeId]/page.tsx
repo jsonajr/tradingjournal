@@ -12,20 +12,21 @@ export default async function TradeDetailPage({ params }: { params: Promise<{ tr
 
   const { data: trade } = await sb
     .from("trades")
-    .select("*, accounts(name, firm, type)")
+    .select("*, open_time, close_time, accounts(name, firm, type)")
     .eq("id", tradeId)
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!trade) notFound();
 
-  const [{ data: accounts }, { data: allTrades }] = await Promise.all([
+  const [{ data: accounts }, { data: allTrades }, { data: mistakes }] = await Promise.all([
     sb.from("accounts").select("id, name, firm").eq("user_id", user.id),
     sb.from("trades")
       .select("id, trade_date")
       .eq("user_id", user.id)
       .order("trade_date", { ascending: false })
       .order("created_at", { ascending: false }),
+    sb.from("playbook_entries").select("id, title").eq("user_id", user.id).eq("type", "mistake").order("title"),
   ]);
 
   // Find prev/next trade IDs for navigation
@@ -41,6 +42,7 @@ export default async function TradeDetailPage({ params }: { params: Promise<{ tr
       trade={trade}
       adjacent={adjacent}
       accounts={accounts ?? []}
+      mistakes={mistakes ?? []}
     />
   );
 }
