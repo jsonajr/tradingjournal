@@ -10,9 +10,9 @@ export default async function TradeDetailPage({ params }: { params: Promise<{ tr
   const { user } = await requireRole(["user", "moderator", "admin"]);
   const sb = await createClient();
 
-  const { data: trade } = await sb
+  const { data: trade, error: tradeError } = await sb
     .from("trades")
-    .select("*, open_time, close_time, accounts(name, firm, type)")
+    .select("*, accounts(name, firm, type)")
     .eq("id", tradeId)
     .eq("user_id", user.id)
     .maybeSingle();
