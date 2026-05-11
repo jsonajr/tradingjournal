@@ -10,7 +10,29 @@ const AUTH_ROUTES = ["/login", "/signup"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const hostname = request.headers.get("host") ?? "";
+  const isAppSubdomain = hostname.startsWith("app.");
+
   let response = NextResponse.next({ request });
+
+  // ── Hostname-based routing ────────────────────────────────────────────────
+  // www.tradiator.net → landing page only, redirect app routes to app subdomain
+  // app.tradiator.net → journal app only, redirect / to /dashboard
+  if (isAppSubdomain) {
+    // On app subdomain: redirect root to dashboard
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  } else {
+    // On www: redirect any app routes to app subdomain
+    const isAppRoute = APP_ROUTES.some(r => pathname.startsWith(r));
+    const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r));
+    if (isAppRoute || isAuthRoute) {
+      const appUrl = new URL(request.url);
+      appUrl.hostname = appUrl.hostname.replace(/^www\./, "app.");
+      return NextResponse.redirect(appUrl);
+    }
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,13 +58,9 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r));
 
   // ── Unauthenticated user trying to access app ─────────────────────────────
-  // Instead of a hard redirect, rewrite to login page content
-  // This keeps the URL the same so iOS stays in standalone mode,
-  // then the client-side PwaNavFix handles pushing to /login
   if (isAppRoute && !user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
-    // Use rewrite instead of redirect to avoid breaking iOS standalone
     const isPwa = request.headers.get("sec-fetch-dest") === "document" &&
                   !request.headers.get("sec-fetch-site");
     if (isPwa) {
