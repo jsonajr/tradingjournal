@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { PlaybookSection, type PlaybookEntry } from "./playbook-section";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,8 +62,9 @@ function toForm(s: Strategy): FormState {
   };
 }
 
-export function StrategiesClient({ initialStrategies }: { initialStrategies: Strategy[] }) {
+export function StrategiesClient({ initialStrategies, initialPlaybook }: { initialStrategies: Strategy[]; initialPlaybook: PlaybookEntry[] }) {
   const [strategies, setStrategies] = useState<Strategy[]>(initialStrategies);
+  const [activeTab, setActiveTab] = useState<"strategies"|"setups"|"mistakes"|"winners">("strategies");
   const [dialogOpen, setDialogOpen]  = useState(false);
   const [editing, setEditing]        = useState<FormState>(EMPTY);
   const [saving, setSaving]          = useState(false);
@@ -126,8 +128,42 @@ export function StrategiesClient({ initialStrategies }: { initialStrategies: Str
     s.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))
   );
 
+  const tabs = [
+    { id: "strategies" as const, label: "Strategies", emoji: "📚" },
+    { id: "setups"     as const, label: "Setups",     emoji: "📋" },
+    { id: "mistakes"   as const, label: "Mistakes",   emoji: "❌" },
+    { id: "winners"    as const, label: "Winners",    emoji: "🏆" },
+  ];
+
   return (
     <div className="p-4 md:p-8">
+      {/* Tab bar */}
+      <div className="mb-6 flex items-center gap-1.5 flex-wrap border-b border-border pb-4">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+              activeTab === tab.id
+                ? "bg-primary/15 text-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            }`}
+          >
+            <span>{tab.emoji}</span>{tab.label}
+            {tab.id !== "strategies" && (
+              <span className="ml-1 text-xs opacity-60">
+                {initialPlaybook.filter(e => e.type === tab.id.slice(0,-1) as any || (tab.id === "setups" && e.type === "setup") || (tab.id === "mistakes" && e.type === "mistake") || (tab.id === "winners" && e.type === "winner")).length}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "setups"    && <PlaybookSection type="setup"   entries={initialPlaybook.filter(e => e.type === "setup")} />}
+      {activeTab === "mistakes"  && <PlaybookSection type="mistake" entries={initialPlaybook.filter(e => e.type === "mistake")} />}
+      {activeTab === "winners"   && <PlaybookSection type="winner"  entries={initialPlaybook.filter(e => e.type === "winner")} />}
+
+      {activeTab === "strategies" && <div className="p-4 md:p-0">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold md:text-3xl">Strategies</h1>
@@ -279,6 +315,7 @@ export function StrategiesClient({ initialStrategies }: { initialStrategies: Str
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>}
     </div>
   );
 }

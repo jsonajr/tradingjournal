@@ -40,6 +40,7 @@ export async function PATCH(request: NextRequest) {
       grade:   body.grade   || null,
       notes:   body.notes   || null,
       blown_account: body.blown_account ?? false,
+      mistake_id: body.mistake_id ?? null,
     })
     .eq("id", id)
     .eq("user_id", user.id)

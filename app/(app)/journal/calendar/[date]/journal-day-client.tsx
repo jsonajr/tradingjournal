@@ -34,6 +34,7 @@ type Trade = {
   notes: string | null; entry_price: number | null; exit_price: number | null;
   stop_price: number | null; contracts: number; account_id: string | null;
   blown_account: boolean;
+  mistake_id: string | null;
 };
 
 type Account = { id: string; name: string; firm: string | null; type: string | null };
@@ -73,8 +74,8 @@ function TagBtn({ on, onClick, children }: { on: boolean; onClick: () => void; c
 }
 
 /* ── Edit Trade Modal ─────────────────────────────────────────────────────── */
-function EditTradeModal({ trade, accounts, date, onClose, onSaved }: {
-  trade: Trade; accounts: Account[]; date: string;
+function EditTradeModal({ trade, accounts, mistakes, date, onClose, onSaved }: {
+  trade: Trade; accounts: Account[]; mistakes: { id: string; title: string }[]; date: string;
   onClose: () => void; onSaved: (t: Trade) => void;
 }) {
   const [saving, setSaving] = useState(false);
@@ -94,6 +95,7 @@ function EditTradeModal({ trade, accounts, date, onClose, onSaved }: {
     grade:         trade.grade   ?? "",
     notes:         trade.notes   ?? "",
     blown_account: trade.blown_account ?? false,
+    mistake_id:    trade.mistake_id   ?? "",
   });
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -183,6 +185,19 @@ function EditTradeModal({ trade, accounts, date, onClose, onSaved }: {
               <Textarea value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Execution notes..." className="min-h-[80px]" />
             </FL>
           </div>
+          {mistakes.length > 0 && (
+            <div className="sm:col-span-2">
+              <FL label="Mistake (optional)">
+                <Select value={form.mistake_id || "__none__"} onValueChange={v => setForm(f => ({ ...f, mistake_id: v === "__none__" ? "" : v }))}>
+                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    {mistakes.map(m => <SelectItem key={m.id} value={m.id}>❌ {m.title}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </FL>
+            </div>
+          )}
           {showBlown && (
             <div className="sm:col-span-2">
               <button
@@ -349,8 +364,8 @@ function EntryEditorModal({ date, existing, onClose, onSaved }: {
 }
 
 /* ── Main Day Screen ──────────────────────────────────────────────────────── */
-export function JournalDayClient({ entry: initialEntry, trades: initialTrades, accounts, date }: {
-  entry: Entry; trades: Trade[]; accounts: Account[]; date: string;
+export function JournalDayClient({ entry: initialEntry, trades: initialTrades, accounts, mistakes = [], date }: {
+  entry: Entry; trades: Trade[]; accounts: Account[]; mistakes?: { id: string; title: string }[]; date: string;
 }) {
   const router = useRouter();
   const [entry, setEntry]   = useState<Entry>(initialEntry);
@@ -641,7 +656,7 @@ export function JournalDayClient({ entry: initialEntry, trades: initialTrades, a
       {/* ── Modals ── */}
       {editing && (
         <EditTradeModal
-          trade={editing} accounts={accounts} date={date}
+          trade={editing} accounts={accounts} mistakes={mistakes} date={date}
           onClose={() => setEditing(null)} onSaved={handleTradeSaved}
         />
       )}

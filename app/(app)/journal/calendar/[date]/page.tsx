@@ -12,11 +12,12 @@ export default async function JournalDayPage({ params }: { params: Promise<{ dat
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) notFound();
 
-  const [{ data: entry }, { data: trades }, { data: accounts }] = await Promise.all([
+  const [{ data: entry }, { data: trades }, { data: accounts }, { data: mistakes }] = await Promise.all([
     sb.from("journal_entries").select("*").eq("user_id", user.id).eq("entry_date", date).maybeSingle(),
-    sb.from("trades").select("id,symbol,direction,pnl,commission,r_multiple,setup,session,grade,notes,entry_price,exit_price,stop_price,contracts,account_id,blown_account").eq("user_id", user.id).eq("trade_date", date).order("created_at"),
+    sb.from("trades").select("id,symbol,direction,pnl,commission,r_multiple,setup,session,grade,notes,entry_price,exit_price,stop_price,contracts,account_id,blown_account,mistake_id").eq("user_id", user.id).eq("trade_date", date).order("created_at"),
     sb.from("accounts").select("id,name,firm,type").eq("user_id", user.id),
+    sb.from("playbook_entries").select("id,title").eq("user_id", user.id).eq("type", "mistake").order("title"),
   ]);
 
-  return <JournalDayClient entry={entry ?? null} trades={trades ?? []} accounts={accounts ?? []} date={date} />;
+  return <JournalDayClient entry={entry ?? null} trades={trades ?? []} accounts={accounts ?? []} mistakes={mistakes ?? []} date={date} />;
 }

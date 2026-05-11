@@ -18,7 +18,8 @@ const GRADES = ["A+","A","B","C","D"];
 
 type Account = { id: string; name: string; firm: string | null; type: string | null };
 
-export function NewTradeClient({ accounts, autoCommission }: { accounts: Account[]; autoCommission: number | null }) {
+type Mistake = { id: string; title: string };
+export function NewTradeClient({ accounts, autoCommission, mistakes = [] }: { accounts: Account[]; autoCommission: number | null; mistakes?: Mistake[] }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
   const [saving, setSaving] = useState(false);
@@ -38,6 +39,7 @@ export function NewTradeClient({ accounts, autoCommission }: { accounts: Account
     session: "NY AM",
     grade: "A",
     notes: "",
+    mistake_id: "",
   });
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -61,6 +63,7 @@ export function NewTradeClient({ accounts, autoCommission }: { accounts: Account
         stop_price: parseFloat(form.stop_price) || null,
         commission: parseFloat(form.commission) || 0,
         blown_account: blownAccount,
+        mistake_id: form.mistake_id || null,
       }),
     });
     setSaving(false);
@@ -151,6 +154,21 @@ export function NewTradeClient({ accounts, autoCommission }: { accounts: Account
             <div className="sm:col-span-2">
               <Field label="Notes"><Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Execution notes, mistakes, what you did well..." className="min-h-[80px]" /></Field>
             </div>
+
+            {/* Mistake dropdown */}
+            {mistakes.length > 0 && (
+              <div className="sm:col-span-2">
+                <Field label="Mistake (optional)">
+                  <Select value={form.mistake_id || "__none__"} onValueChange={v => set("mistake_id", v === "__none__" ? "" : v)}>
+                    <SelectTrigger><SelectValue placeholder="None — trade followed the plan" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {mistakes.map(m => <SelectItem key={m.id} value={m.id}>❌ {m.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+            )}
 
             {/* Blown account checkbox — only shown for eval/funded accounts */}
             {showBlownToggle && (

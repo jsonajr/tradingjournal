@@ -8,11 +8,10 @@ export default async function StrategiesPage() {
   const { user } = await requireRole(["user", "moderator", "admin"]);
   const sb = await createClient();
 
-  const { data: strategies } = await sb
-    .from("strategies")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: true });
+  const [{ data: strategies }, { data: playbook }] = await Promise.all([
+    sb.from("strategies").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
+    sb.from("playbook_entries").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+  ]);
 
-  return <StrategiesClient initialStrategies={strategies ?? []} />;
+  return <StrategiesClient initialStrategies={strategies ?? []} initialPlaybook={playbook ?? []} />;
 }

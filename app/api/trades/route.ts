@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     grade: body.grade || null,
     notes: body.notes || null,
     blown_account: body.blown_account ?? false,
+    mistake_id: body.mistake_id ?? null,
   }).select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

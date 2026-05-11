@@ -30,6 +30,7 @@ type Trade = {
   setup: string | null; session: string | null; grade: string | null;
   notes: string | null;
   blown_account: boolean;
+  mistake_id: string | null;
   accounts: { name: string; firm?: string | null; type?: string | null } | { name: string; firm?: string | null; type?: string | null }[] | null;
   account_id: string | null;
 };
@@ -46,9 +47,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function EditTradeModal({
-  trade, accounts, onClose, onSaved,
+  trade, accounts, mistakes, onClose, onSaved,
 }: {
-  trade: Trade; accounts: Account[]; onClose: () => void; onSaved: (t: Trade) => void;
+  trade: Trade; accounts: Account[]; mistakes: Mistake[]; onClose: () => void; onSaved: (t: Trade) => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -67,6 +68,7 @@ function EditTradeModal({
     grade:       trade.grade    ?? "",
     notes:       trade.notes    ?? "",
     blown_account: trade.blown_account ?? false,
+    mistake_id:    trade.mistake_id   ?? "",
   });
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -182,20 +184,42 @@ function EditTradeModal({
             </Field>
           </div>
         </div>
-        {/* Blown account checkbox - only for eval/funded */}
+        {/* Mistake dropdown */}
+        {mistakes.length > 0 && (
+          <div className="mt-3">
+            <Field label="Mistake (optional)">
+              <Select value={form.mistake_id || "__none__"} onValueChange={v => set("mistake_id", v === "__none__" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">None</SelectItem>
+                  {mistakes.map(m => <SelectItem key={m.id} value={m.id}>❌ {m.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+        )}
+
+        {/* Blown account toggle - only for eval/funded */}
         {(() => {
           const acc = accounts.find((a) => a.id === form.account_id);
           if (acc?.type !== "eval" && acc?.type !== "funded") return null;
           return (
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={!!form.blown_account}
-                onChange={(e) => setForm((f) => ({ ...f, blown_account: e.target.checked }))}
-                className="h-4 w-4 rounded border-input accent-red-500"
-              />
-              <span className="text-sm text-muted-foreground">This trade blew the account <span className="text-xs">(marks account as Failed)</span></span>
-            </label>
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, blown_account: !f.blown_account }))}
+                className={`w-full flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all ${form.blown_account ? "border-red-500 bg-red-500/10" : "border-border hover:border-red-500/40"}`}
+              >
+                <span className={!form.blown_account ? "grayscale opacity-40 text-xl" : "text-xl"}>💥</span>
+                <div className="flex-1">
+                  <div className={`text-sm font-semibold ${form.blown_account ? "text-red-500" : "text-foreground"}`}>This trade blew the account</div>
+                  <div className="text-xs text-muted-foreground">Marks account status as Failed</div>
+                </div>
+                <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 ${form.blown_account ? "border-red-500 bg-red-500" : "border-muted-foreground"}`}>
+                  {form.blown_account && <div className="h-2 w-2 rounded-full bg-white" />}
+                </div>
+              </button>
+            </div>
           );
         })()}
         <DialogFooter className="mt-2">
@@ -344,7 +368,8 @@ function MassEditModal({ count, accounts, onClose, onSaved }: {
   );
 }
 
-export function TradesClient({ initialTrades, accounts, autoCommission }: { initialTrades: Trade[]; accounts: Account[]; autoCommission: number | null }) {
+type Mistake = { id: string; title: string };
+export function TradesClient({ initialTrades, accounts, autoCommission, mistakes = [] }: { initialTrades: Trade[]; accounts: Account[]; autoCommission: number | null; mistakes?: Mistake[] }) {
   const router = useRouter();
   const [trades, setTrades] = useState(initialTrades);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -667,6 +692,11 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Badge variant="outline">{t.grade ?? "—"}</Badge>
+                        {t.mistake_id && mistakes.find(m => m.id === t.mistake_id) && (
+                          <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-500 bg-red-500/5 max-w-[120px] truncate">
+                            ❌ {mistakes.find(m => m.id === t.mistake_id)?.title}
+                          </Badge>
+                        )}
                         {t.blown_account && <span title="Blew account" className="text-base leading-none">💥</span>}
                       </div>
                     </TableCell>
@@ -713,6 +743,7 @@ export function TradesClient({ initialTrades, accounts, autoCommission }: { init
         <EditTradeModal
           trade={editing}
           accounts={accounts}
+          mistakes={mistakes}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
         />
