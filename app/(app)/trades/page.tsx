@@ -9,7 +9,7 @@ export default async function TradesPage() {
   const sb = await createClient();
   const [{ data: trades }, { data: accounts }, { data: userSettings }, { data: mistakes }] = await Promise.all([
     sb.from("trades")
-      .select("id, trade_date, symbol, direction, contracts, entry_price, exit_price, stop_price, pnl, commission, r_multiple, setup, session, grade, notes, account_id, blown_account, accounts(name, firm, type)")
+      .select("id, trade_date, symbol, direction, contracts, entry_price, exit_price, stop_price, pnl, commission, r_multiple, setup, session, grade, notes, account_id, blown_account, mistake_id, accounts(name, firm, type)")
       .eq("user_id", user.id)
       .order("trade_date", { ascending: false })
       .order("symbol", { ascending: true })
