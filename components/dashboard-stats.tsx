@@ -79,16 +79,23 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
 
       {open && createPortal(
         <>
+          <style>{`
+            @keyframes pnl-backdrop { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes pnl-modal { from { opacity: 0; transform: translate(-50%, -48%) scale(0.96) } to { opacity: 1; transform: translate(-50%, -50%) scale(1) } }
+            .pnl-backdrop { animation: pnl-backdrop 0.2s ease forwards; }
+            .pnl-modal { animation: pnl-modal 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+          `}</style>
+
           {/* Dimmed backdrop — covers everything including sidebar */}
           <div
-            className="fixed inset-0"
+            className="pnl-backdrop fixed inset-0"
             style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", zIndex: 9999 }}
             onClick={() => setOpen(false)}
           />
 
           {/* Centered modal */}
           <div
-            className="fixed overflow-hidden rounded-2xl shadow-2xl"
+            className="pnl-modal fixed overflow-hidden rounded-2xl shadow-2xl"
             style={{
               top: "50%", left: "50%",
               transform: "translate(-50%, -50%)",
