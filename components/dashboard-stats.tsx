@@ -48,10 +48,11 @@ function fmtCompact(n: number, signed = false): string {
 
 
 /* ── PnL Card Modal ──────────────────────────────────────────────────────── */
-function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, accounts, allTrades }: {
+function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, accounts, allTrades, profileName }: {
   todayNet: number; todayWins: number; todayLosses: number; todayCount: number; acctTab: string | null;
   accounts: { id: string; name: string; type: string | null; status: string | null }[];
   allTrades: { account_id: string | null; trade_date: string; pnl: number; commission: number }[];
+  profileName: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const isPos = todayNet >= 0;
@@ -127,7 +128,7 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-black text-primary">T</div>
                 <div>
-                  <div className="text-sm font-bold text-foreground leading-none">Tradiator</div>
+                  <div className="text-sm font-bold text-foreground leading-none">{profileName ?? "Tradiator"}</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
                     {acctTab ? acctTab.charAt(0).toUpperCase() + acctTab.slice(1) : "All"} accounts · Today&apos;s P&L
                   </div>
@@ -379,6 +380,7 @@ export function DashboardStats({
             acctTab={acctTab}
             accounts={accounts}
             allTrades={allTrades}
+            profileName={profileName}
           />
           <QuickTradeWrapper accounts={accounts} userId={userId} popupEnabled={popupEnabled} />
         </div>
