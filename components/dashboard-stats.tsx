@@ -46,16 +46,29 @@ function fmtCompact(n: number, signed = false): string {
 
 
 
-/* ── PnL Card Button ─────────────────────────────────────────────────────── */
-function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab }: {
+/* ── PnL Card Modal ──────────────────────────────────────────────────────── */
+function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, accounts, allTrades }: {
   todayNet: number; todayWins: number; todayLosses: number; todayCount: number; acctTab: string | null;
+  accounts: { id: string; name: string; type: string | null; status: string | null }[];
+  allTrades: { account_id: string | null; trade_date: string; pnl: number; commission: number }[];
 }) {
   const [open, setOpen] = useState(false);
   const isPos = todayNet >= 0;
-  const fmt = (n: number) => "$" + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmt = (n: number) => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  // Per-account today P&L
+  const accountsOfType = accounts.filter(a => !acctTab || (a.type ?? "live") === acctTab);
+  const accountRows = accountsOfType.map(acct => {
+    const acctTrades = allTrades.filter(t => t.account_id === acct.id && t.trade_date === todayStr);
+    const net = acctTrades.reduce((s, t) => s + t.pnl - t.commission, 0);
+    const wins = acctTrades.filter(t => t.pnl > 0).length;
+    const losses = acctTrades.filter(t => t.pnl < 0).length;
+    return { acct, net, wins, losses, count: acctTrades.length };
+  });
 
   return (
-    <div className="relative">
+    <div>
       <button
         onClick={() => setOpen(v => !v)}
         className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground"
@@ -65,51 +78,140 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab }
 
       {open && (
         <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          {/* Card */}
-          <div className="absolute right-0 top-10 z-50 w-72 rounded-2xl shadow-2xl overflow-hidden"
-            style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
-            {/* Header bar */}
-            <div className="flex items-center justify-between px-4 py-2.5"
-              style={{ background: "hsl(223,26%,14%)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <div className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary">T</div>
+          {/* Dimmed backdrop */}
+          <div
+            className="fixed inset-0 z-50"
+            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+            onClick={() => setOpen(false)}
+          />
+
+          {/* Centered modal */}
+          <div
+            className="fixed z-50 overflow-hidden rounded-2xl shadow-2xl"
+            style={{
+              top: "50%", left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "min(860px, 95vw)",
+              maxHeight: "90vh",
+              border: "1px solid rgba(255,255,255,0.1)",
+              background: "hsl(224,27%,8%)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {/* Header */}
+            <div
+              className="flex items-center justify-between px-6 py-4 shrink-0"
+              style={{ background: "hsl(223,26%,13%)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-black text-primary">T</div>
                 <div>
-                  <div className="text-xs font-semibold text-foreground leading-none">Tradiator</div>
-                  <div className="text-[9px] text-muted-foreground">{acctTab ? acctTab.charAt(0).toUpperCase() + acctTab.slice(1) : "All"} accounts</div>
+                  <div className="text-sm font-bold text-foreground leading-none">Tradiator</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                    {acctTab ? acctTab.charAt(0).toUpperCase() + acctTab.slice(1) : "All"} accounts · Today&apos;s P&L
+                  </div>
                 </div>
               </div>
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none">×</button>
+              <button
+                onClick={() => setOpen(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors text-xl leading-none"
+              >×</button>
             </div>
 
-            {/* P&L body */}
-            <div className="flex flex-col items-center justify-center py-8 px-6"
-              style={{ background: "hsl(224,27%,8%)" }}>
-              <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
-                Today&apos;s P&L
-              </div>
-              <div className={`text-4xl font-black tabular-nums leading-none ${isPos ? "text-green-400" : "text-red-400"}`}
-                style={{ textShadow: isPos ? "0 0 40px rgba(74,222,128,0.35)" : "0 0 40px rgba(248,113,113,0.35)" }}>
-                {todayCount === 0 ? "$0.00" : `${isPos ? "" : "-"}${fmt(todayNet)}`}
-              </div>
-              {todayCount > 0 && (
-                <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="text-green-400 font-semibold">{todayWins}W</span>
-                  <span>·</span>
-                  <span className="text-red-400 font-semibold">{todayLosses}L</span>
-                  <span>·</span>
-                  <span>{todayCount} trades</span>
+            {/* Body: two columns */}
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+
+              {/* Left — big summary */}
+              <div
+                className="flex flex-col items-center justify-center px-10 py-12 shrink-0"
+                style={{ width: "340px", borderRight: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">
+                  Today&apos;s P&L
                 </div>
-              )}
-              {todayCount === 0 && (
-                <div className="mt-2 text-xs text-muted-foreground">No trades logged today</div>
-              )}
+                <div
+                  className={`text-6xl font-black tabular-nums leading-none ${isPos ? "text-green-400" : "text-red-400"}`}
+                  style={{ textShadow: isPos ? "0 0 60px rgba(74,222,128,0.4)" : "0 0 60px rgba(248,113,113,0.4)" }}
+                >
+                  {fmt(todayNet)}
+                </div>
+
+                {todayCount > 0 ? (
+                  <>
+                    <div className="mt-5 flex items-center gap-4 text-sm">
+                      <span className="text-green-400 font-semibold">{todayWins}W</span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="text-red-400 font-semibold">{todayLosses}L</span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="text-muted-foreground">{todayCount} trades</span>
+                    </div>
+                    <div className="mt-6 w-full rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Win rate</div>
+                      <div className="text-2xl font-bold text-foreground">
+                        {todayCount > 0 ? Math.round((todayWins / todayCount) * 100) : 0}%
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-4 text-sm text-muted-foreground">No trades logged today</div>
+                )}
+              </div>
+
+              {/* Right — per-account list */}
+              <div className="flex flex-col flex-1 min-w-0 overflow-y-auto">
+                <div
+                  className="px-6 py-3 shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  Accounts
+                </div>
+                {accountRows.length === 0 ? (
+                  <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">No accounts found</div>
+                ) : (
+                  <div className="divide-y divide-white/[0.05]">
+                    {accountRows.map(({ acct, net, wins, losses, count }) => {
+                      const pos = net >= 0;
+                      return (
+                        <div key={acct.id} className="flex items-center justify-between px-6 py-4 hover:bg-white/[0.03] transition-colors">
+                          <div className="flex flex-col min-w-0 mr-4">
+                            <span className="text-sm font-semibold text-foreground truncate">{acct.name}</span>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {acct.status && acct.status !== "active" && (
+                                <span className={`text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full ${
+                                  acct.status === "failed" ? "bg-red-500/15 text-red-400" :
+                                  acct.status === "withdrawn" ? "bg-yellow-500/15 text-yellow-400" :
+                                  "bg-white/10 text-muted-foreground"
+                                }`}>{acct.status}</span>
+                              )}
+                              {count > 0 && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  {wins}W · {losses}L · {count} trade{count !== 1 ? "s" : ""}
+                                </span>
+                              )}
+                              {count === 0 && (
+                                <span className="text-[10px] text-muted-foreground">No trades today</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end shrink-0">
+                            <span className={`text-base font-bold tabular-nums ${count === 0 ? "text-muted-foreground" : pos ? "text-green-400" : "text-red-400"}`}>
+                              {count === 0 ? "—" : fmt(net)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-center py-2"
-              style={{ background: "hsl(223,26%,14%)", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            <div
+              className="flex items-center justify-center py-2.5 shrink-0"
+              style={{ background: "hsl(223,26%,13%)", borderTop: "1px solid rgba(255,255,255,0.08)" }}
+            >
               <span className="text-[9px] text-muted-foreground tracking-widest font-medium uppercase">Powered by Tradiator</span>
             </div>
           </div>
@@ -264,6 +366,8 @@ export function DashboardStats({
             todayLosses={todayLosses}
             todayCount={todayTrades.length}
             acctTab={acctTab}
+            accounts={accounts}
+            allTrades={allTrades}
           />
           <QuickTradeWrapper accounts={accounts} userId={userId} popupEnabled={popupEnabled} />
         </div>
