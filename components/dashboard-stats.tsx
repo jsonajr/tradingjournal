@@ -78,25 +78,26 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
 
       {open && (
         <>
-          {/* Dimmed backdrop */}
+          {/* Dimmed backdrop — covers everything including sidebar */}
           <div
-            className="fixed inset-0 z-50"
-            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+            className="fixed inset-0"
+            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", zIndex: 9999 }}
             onClick={() => setOpen(false)}
           />
 
           {/* Centered modal */}
           <div
-            className="fixed z-50 overflow-hidden rounded-2xl shadow-2xl"
+            className="fixed overflow-hidden rounded-2xl shadow-2xl"
             style={{
               top: "50%", left: "50%",
               transform: "translate(-50%, -50%)",
-              width: "min(1000px, 95vw)",
+              width: "min(680px, 92vw)",
               maxHeight: "90vh",
               border: "1px solid rgba(255,255,255,0.1)",
               background: "hsl(224,27%,8%)",
               display: "flex",
               flexDirection: "column",
+              zIndex: 10000,
             }}
           >
             {/* Header */}
