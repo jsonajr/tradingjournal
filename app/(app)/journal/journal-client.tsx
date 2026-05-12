@@ -33,7 +33,6 @@ type Trade = {
 };
 
 const SYMBOLS = ["ES","NQ","MES","MNQ","CL","GC","RTY","YM","Other"];
-const SETUPS = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Other"];
 const SESSIONS = ["London","NY Open","NY AM","NY PM","Asia"];
 const GRADES = ["A+","A","B","C","D"];
 
@@ -49,7 +48,7 @@ export function JournalClient({ initialTrades, accounts, userId }: { initialTrad
     trade_date: today, account_id: accounts[0]?.id ?? "", symbol: "ES",
     direction: "Long" as "Long" | "Short", contracts: "1", entry_price: "",
     exit_price: "", stop_price: "", pnl: "", commission: "4.00",
-    setup: "Trend Follow", session: "NY AM", grade: "B", notes: "",
+    setup: "", session: "NY AM", grade: "B", notes: "",
   });
 
   const [importAccount, setImportAccount] = useState(accounts[0]?.id ?? "");
@@ -209,10 +208,7 @@ export function JournalClient({ initialTrades, accounts, userId }: { initialTrad
                   <Field label="Stop"><Input type="number" step="0.25" value={form.stop_price} onChange={(e) => setForm({ ...form, stop_price: e.target.value })} placeholder="0.00" /></Field>
                   <Field label="Commission"><Input type="number" step="0.01" value={form.commission} onChange={(e) => setForm({ ...form, commission: e.target.value })} /></Field>
                   <Field label="Setup">
-                    <Select value={form.setup} onValueChange={(v) => setForm({ ...form, setup: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{SETUPS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                    </Select>
+                    <Input value={form.setup} onChange={(e) => setForm({ ...form, setup: e.target.value })} placeholder="e.g. ICT FVG, VWAP Reclaim..." />
                   </Field>
                   <Field label="Session">
                     <Select value={form.session} onValueChange={(v) => setForm({ ...form, session: v })}>

@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const SYMBOLS = ["ES","NQ","MES","MNQ","CL","GC","RTY","YM","Other"];
-const SETUPS = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Other"];
 const GRADES = ["A+","A","B","C","D"];
 const PLATFORM_INFO: Record<string, string> = {
   tradovate: "Tradovate: Account → Reports → Fills → Export CSV",
@@ -41,7 +40,7 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
     account_id: accounts[0]?.id ?? "",
     symbol: "ES", contracts: "1", pnl: "",
     entry_price: "", exit_price: "", stop_price: "",
-    commission: "4.00", setup: "Trend Follow", session: "NY AM", grade: "A", notes: "",
+    commission: "4.00", setup: "", session: "NY AM", grade: "A", notes: "",
   });
 
   // CSV import
@@ -194,10 +193,7 @@ export function QuickTradeButtons({ accounts, userId, popupEnabled = true }: { a
                 <F label="Stop"><Input type="number" step="0.25" value={form.stop_price} onChange={(e) => set("stop_price", e.target.value)} placeholder="0.00" /></F>
                 <F label="Commission"><Input type="number" step="0.01" value={form.commission} onChange={(e) => set("commission", e.target.value)} /></F>
                 <F label="Setup">
-                  <Select value={form.setup} onValueChange={(v) => set("setup", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{SETUPS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <Input value={form.setup} onChange={(e) => set("setup", e.target.value)} placeholder="e.g. ICT FVG, VWAP Reclaim..." />
                 </F>
                 <F label="Grade">
                   <Select value={form.grade} onValueChange={(v) => set("grade", v)}>

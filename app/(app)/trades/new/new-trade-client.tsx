@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 
 const SYMBOLS = ["ES","NQ","MES","MNQ","CL","GC","RTY","YM","Other"];
-const SETUPS = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other"];
 const SESSIONS = ["London","NY Open","NY AM","NY PM","Asia"];
 const GRADES = ["A+","A","B","C","D"];
 
@@ -35,7 +34,7 @@ export function NewTradeClient({ accounts, autoCommission, mistakes = [] }: { ac
     exit_price: "",
     stop_price: "",
     commission: autoCommission != null ? String(autoCommission) : "4.00",
-    setup: "Trend Follow",
+    setup: "",
     session: "NY AM",
     grade: "A",
     notes: "",
@@ -134,10 +133,7 @@ export function NewTradeClient({ accounts, autoCommission, mistakes = [] }: { ac
             <Field label="Stop Price"><Input type="number" step="0.25" value={form.stop_price} onChange={(e) => set("stop_price", e.target.value)} placeholder="0.00" /></Field>
             <Field label="Commission ($)"><Input type="number" step="0.01" value={form.commission} onChange={(e) => set("commission", e.target.value)} /></Field>
             <Field label="Setup">
-              <Select value={form.setup} onValueChange={(v) => set("setup", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{SETUPS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
+              <Input value={form.setup} onChange={(e) => set("setup", e.target.value)} placeholder="e.g. ICT FVG, VWAP Reclaim..." />
             </Field>
             <Field label="Session">
               <Select value={form.session} onValueChange={(v) => set("session", v)}>

@@ -15,7 +15,6 @@ import { fmtMoney } from "@/lib/utils";
 import { Plus, Upload, Trash2, CheckSquare, Square, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
-const SETUPS  = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other"];
 const SESSIONS = ["London","NY Open","NY AM","NY PM","Asia"];
 const GRADES = ["A+","A","B","C","D"];
 
@@ -147,13 +146,7 @@ function EditTradeModal({
             <Input type="number" step="0.01" value={form.commission} onChange={(e) => set("commission", e.target.value)} />
           </Field>
           <Field label="Setup">
-            <Select value={form.setup || "__none__"} onValueChange={(v) => set("setup", v === "__none__" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Select setup" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">None</SelectItem>
-                {SETUPS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Input value={form.setup} onChange={(e) => set("setup", e.target.value)} placeholder="e.g. ICT FVG, VWAP Reclaim..." />
           </Field>
           <Field label="Session">
             <Select value={form.session || "__none__"} onValueChange={(v) => set("session", v === "__none__" ? "" : v)}>
@@ -315,16 +308,7 @@ function MassEditModal({ count, accounts, onClose, onSaved }: {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs uppercase tracking-wide">Setup</Label>
-            <Select value={form.setup || "__none__"} onValueChange={v => set("setup", v === "__none__" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="— keep existing —" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— keep existing —</SelectItem>
-                <SelectItem value="__clear__">Clear setup</SelectItem>
-                {["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other","ICT CISD","ICT Fair Value Gap","ICT Order Block","ICT Liquidity Sweep","ICT Optimal Trade Entry","ICT Breaker Block","ICT Power of 3"].map(s => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input value={form.setup} onChange={e => set("setup", e.target.value)} placeholder="e.g. ICT FVG, VWAP Reclaim..." />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs uppercase tracking-wide">Session</Label>

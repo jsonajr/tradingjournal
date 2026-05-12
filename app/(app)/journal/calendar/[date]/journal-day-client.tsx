@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-const SETUPS   = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other"];
 const SESSIONS = ["London","NY Open","NY AM","NY PM","Asia"];
 const GRADES   = ["A+","A","B","C","D"];
 
@@ -156,13 +155,7 @@ function EditTradeModal({ trade, accounts, mistakes, date, onClose, onSaved }: {
           <FL label="Exit Price"><Input type="number" step="0.25" value={form.exit_price} onChange={e => set("exit_price", e.target.value)} placeholder="0.00" /></FL>
           <FL label="Stop Price"><Input type="number" step="0.25" value={form.stop_price} onChange={e => set("stop_price", e.target.value)} placeholder="0.00" /></FL>
           <FL label="Setup">
-            <Select value={form.setup || "__none__"} onValueChange={v => set("setup", v === "__none__" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">None</SelectItem>
-                {SETUPS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Input value={form.setup} onChange={e => set("setup", e.target.value)} placeholder="e.g. ICT FVG, VWAP Reclaim..." />
           </FL>
           <FL label="Session">
             <Select value={form.session || "__none__"} onValueChange={v => set("session", v === "__none__" ? "" : v)}>
@@ -232,11 +225,14 @@ function EditTradeModal({ trade, accounts, mistakes, date, onClose, onSaved }: {
 }
 
 /* ── Journal Entry Editor Modal ───────────────────────────────────────────── */
-function EntryEditorModal({ date, existing, onClose, onSaved }: {
+function EntryEditorModal({ date, existing, onClose, onSaved, strategies = [] }: {
   date: string; existing: Entry;
   onClose: () => void; onSaved: (e: NonNullable<Entry>) => void;
+  strategies?: { id: string; name: string }[];
 }) {
   const [saving, setSaving] = useState(false);
+  const [newSetupInput, setNewSetupInput] = useState("");
+  const [addingNewSetup, setAddingNewSetup] = useState(false);
   const [form, setForm] = useState({
     title:         existing?.title        ?? "",
     bias:          existing?.bias         ?? null as "Bullish"|"Bearish"|"Neutral"|null,
@@ -312,9 +308,48 @@ function EntryEditorModal({ date, existing, onClose, onSaved }: {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs uppercase tracking-wide">Setups Traded</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {SETUPS.map(s => (
-                <TagBtn key={s} on={form.setups.includes(s)} onClick={() => setForm(f => ({ ...f, setups: toggleTag(f.setups, s) }))}>{s}</TagBtn>
+            {!addingNewSetup ? (
+              <Select onValueChange={val => {
+                if (val === "__new__") { setAddingNewSetup(true); return; }
+                setForm(f => ({ ...f, setups: f.setups.includes(val) ? f.setups : [...f.setups, val] }));
+              }}>
+                <SelectTrigger><SelectValue placeholder="Add setup…" /></SelectTrigger>
+                <SelectContent>
+                  {strategies.filter(s => !form.setups.includes(s.name)).map(s => (
+                    <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                  ))}
+                  <SelectItem value="__new__" className="text-primary">+ Add new setup</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  autoFocus
+                  className="h-8 text-xs"
+                  placeholder="Setup name…"
+                  value={newSetupInput}
+                  onChange={e => setNewSetupInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && newSetupInput.trim()) {
+                      setForm(f => ({ ...f, setups: f.setups.includes(newSetupInput.trim()) ? f.setups : [...f.setups, newSetupInput.trim()] }));
+                      setNewSetupInput(""); setAddingNewSetup(false);
+                    }
+                    if (e.key === "Escape") { setAddingNewSetup(false); setNewSetupInput(""); }
+                  }}
+                />
+                <Button size="sm" className="h-8 text-xs px-2" onClick={() => {
+                  if (newSetupInput.trim()) setForm(f => ({ ...f, setups: f.setups.includes(newSetupInput.trim()) ? f.setups : [...f.setups, newSetupInput.trim()] }));
+                  setNewSetupInput(""); setAddingNewSetup(false);
+                }}>Add</Button>
+                <Button size="sm" variant="ghost" className="h-8 text-xs px-2" onClick={() => { setAddingNewSetup(false); setNewSetupInput(""); }}>Cancel</Button>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {form.setups.map(s => (
+                <button key={s} onClick={() => setForm(f => ({ ...f, setups: f.setups.filter(x => x !== s) }))}
+                  className="rounded-md border border-primary bg-primary/15 text-primary px-2.5 py-1 text-xs font-medium flex items-center gap-1 hover:bg-primary/25">
+                  {s} <span className="opacity-60">×</span>
+                </button>
               ))}
             </div>
           </div>
@@ -466,10 +501,8 @@ export function JournalDayClient({ entry: initialEntry, trades: initialTrades, a
     setEntry(null);
   }
 
-  // Build setup options: strategies from DB + fallback hardcoded list
-  const setupOptions = strategies.length > 0
-    ? strategies.map(s => s.name)
-    : ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other"];
+  // Build setup options from strategies in DB only
+  const setupOptions = strategies.map(s => s.name);
 
   return (
     <div className="min-h-screen p-4 md:p-8 max-w-6xl mx-auto">
@@ -869,6 +902,7 @@ export function JournalDayClient({ entry: initialEntry, trades: initialTrades, a
       {entryEditor && (
         <EntryEditorModal
           date={date} existing={entry}
+          strategies={strategies}
           onClose={() => setEntryEditor(false)}
           onSaved={saved => { setEntry(saved); setEntryEditor(false); }}
         />

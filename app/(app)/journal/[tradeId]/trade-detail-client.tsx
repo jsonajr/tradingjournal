@@ -15,7 +15,6 @@ import { fmtMoney, cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-const SETUPS   = ["Trend Follow","Mean Reversion","Breakout","VWAP Reclaim","Opening Range","Supply/Demand","Liquidity Sweep","Fair Value Gap","News Play","Scalp","Other"];
 const SESSIONS = ["London","NY Open","NY AM","NY PM","Asia"];
 const GRADES   = ["A+","A","B","C","D"];
 
@@ -229,10 +228,7 @@ function EditTradeModal({ trade, accounts, mistakes, onClose, onSaved }: {
           <FL label="Stop Price"><Input type="number" step="0.25" value={form.stop_price} onChange={e => set("stop_price", e.target.value)} placeholder="0.00" /></FL>
           <FL label="Commission ($)"><Input type="number" step="0.01" value={form.commission} onChange={e => set("commission", e.target.value)} /></FL>
           <FL label="Setup">
-            <Select value={form.setup || "__none__"} onValueChange={v => set("setup", v === "__none__" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-              <SelectContent><SelectItem value="__none__">None</SelectItem>{SETUPS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
+            <Input value={form.setup} onChange={e => set("setup", e.target.value)} placeholder="e.g. ICT FVG, VWAP Reclaim..." />
           </FL>
           <FL label="Session">
             <Select value={form.session || "__none__"} onValueChange={v => set("session", v === "__none__" ? "" : v)}>
