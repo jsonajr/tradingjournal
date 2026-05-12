@@ -84,6 +84,17 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
             @keyframes pnl-modal { from { opacity: 0; transform: translate(-50%, -48%) scale(0.96) } to { opacity: 1; transform: translate(-50%, -50%) scale(1) } }
             .pnl-backdrop { animation: pnl-backdrop 0.2s ease forwards; }
             .pnl-modal { animation: pnl-modal 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+            .pnl-body { display: flex; flex-direction: row; }
+            .pnl-left { width: 55%; border-right: 1px solid rgba(255,255,255,0.08); padding: 28px 32px; display: flex; flex-direction: column; align-items: center; text-align: center; align-self: stretch; }
+            .pnl-right { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+            .pnl-amount { font-size: 2.8rem; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+            .pnl-divider { display: none; }
+            @media (max-width: 520px) {
+              .pnl-body { flex-direction: column; }
+              .pnl-left { width: 100%; border-right: none; padding: 24px 24px 16px; }
+              .pnl-right { border-top: 1px solid rgba(255,255,255,0.08); }
+              .pnl-amount { font-size: 2.2rem; }
+            }
           `}</style>
 
           {/* Dimmed backdrop — covers everything including sidebar */}
@@ -128,34 +139,30 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
               >×</button>
             </div>
 
-            {/* Body: two columns — height driven by content, not fixed */}
-            <div className="flex" style={{ maxHeight: "70vh", minHeight: 0 }}>
+            {/* Body */}
+            <div className="pnl-body" style={{ maxHeight: "70vh", minHeight: 0, overflowY: "auto" }}>
 
               {/* Left — summary */}
-              <div
-                className="flex flex-col items-center justify-start text-center px-12 py-10 shrink-0 self-stretch"
-                style={{ width: "55%", borderRight: "1px solid rgba(255,255,255,0.08)" }}
-              >
+              <div className="pnl-left">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">
                   Today&apos;s P&L
                 </div>
                 <div
-                  className={`text-5xl font-black tabular-nums leading-none ${isPos ? "text-green-400" : "text-red-400"}`}
-                  style={{ textShadow: isPos ? "0 0 60px rgba(74,222,128,0.4)" : "0 0 60px rgba(248,113,113,0.4)" }}
+                  className={`pnl-amount tabular-nums ${isPos ? "text-green-400" : "text-red-400"}`}
                 >
                   {todayCount === 0 ? "$0.00" : (isPos ? "+" : "") + fmt(todayNet)}
                 </div>
 
                 {todayCount > 0 ? (
                   <>
-                    <div className="mt-5 flex items-center gap-4 text-sm">
+                    <div className="mt-4 flex items-center gap-3 text-sm flex-wrap justify-center">
                       <span className="text-green-400 font-semibold">{todayWins}W</span>
                       <span className="text-muted-foreground">·</span>
                       <span className="text-red-400 font-semibold">{todayLosses}L</span>
                       <span className="text-muted-foreground">·</span>
                       <span className="text-muted-foreground">{todayCount} trades</span>
                     </div>
-                    <div className="mt-2.5 text-[11px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.22)" }}>
+                    <div className="mt-2 text-[11px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.22)" }}>
                       Win Rate <span style={{ color: "rgba(255,255,255,0.38)", fontWeight: 500 }}>{Math.round((todayWins / todayCount) * 100)}%</span>
                     </div>
                   </>
@@ -165,25 +172,25 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
               </div>
 
               {/* Right — per-account list */}
-              <div className="flex flex-col flex-1 min-w-0">
+              <div className="pnl-right">
                 <div
-                  className="px-6 py-3 shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                  className="px-5 py-3 shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
                   style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
                 >
                   Accounts
                 </div>
-                <div className="overflow-y-auto">
+                <div>
                   {accountRows.length === 0 ? (
-                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No accounts found</div>
+                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground p-6">No accounts found</div>
                   ) : (
                     <div className="divide-y divide-white/[0.05]">
                       {accountRows.map(({ acct, net, wins, losses, count }) => {
                         const pos = net >= 0;
                         return (
-                          <div key={acct.id} className="flex items-center justify-between px-6 py-4 hover:bg-white/[0.03] transition-colors">
-                            <div className="flex flex-col min-w-0 mr-4">
+                          <div key={acct.id} className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.03] transition-colors gap-3">
+                            <div className="flex flex-col min-w-0">
                               <span className="text-sm font-semibold text-foreground truncate">{acct.name}</span>
-                              <div className="flex items-center gap-2 mt-0.5">
+                              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                 {acct.status && acct.status !== "active" && (
                                   <span className={`text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full ${
                                     acct.status === "failed" ? "bg-red-500/15 text-red-400" :
@@ -191,17 +198,13 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
                                     "bg-white/10 text-muted-foreground"
                                   }`}>{acct.status}</span>
                                 )}
-                                {count > 0 ? (
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {wins}W · {losses}L · {count} trade{count !== 1 ? "s" : ""}
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] text-muted-foreground">No trades today</span>
-                                )}
+                                <span className="text-[10px] text-muted-foreground">
+                                  {count > 0 ? `${wins}W · ${losses}L · ${count}t` : "No trades today"}
+                                </span>
                               </div>
                             </div>
-                            <div className="flex flex-col items-end shrink-0">
-                              <span className={`text-base font-bold tabular-nums ${count === 0 ? "text-muted-foreground" : pos ? "text-green-400" : "text-red-400"}`}>
+                            <div className="shrink-0">
+                              <span className={`text-sm font-bold tabular-nums whitespace-nowrap ${count === 0 ? "text-muted-foreground" : pos ? "text-green-400" : "text-red-400"}`}>
                                 {count === 0 ? "—" : (pos ? "+" : "") + fmt(net)}
                               </span>
                             </div>
