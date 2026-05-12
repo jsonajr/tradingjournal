@@ -8,6 +8,7 @@ import { EquityChart } from "@/components/journal/equity-chart";
 import { fmtMoney } from "@/lib/utils";
 import { TrendingUp, BookOpen, Calendar } from "lucide-react";
 import { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 
 type Trade = {
   id: string; trade_date: string; symbol: string; direction: string;
@@ -76,7 +77,7 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
         <span className="text-sm">💰</span> P&L Card
       </button>
 
-      {open && (
+      {open && createPortal(
         <>
           {/* Dimmed backdrop — covers everything including sidebar */}
           <div
@@ -214,7 +215,8 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
               <span className="text-[9px] text-muted-foreground tracking-widest font-medium uppercase">Powered by Tradiator</span>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
