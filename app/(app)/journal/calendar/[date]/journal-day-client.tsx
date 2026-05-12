@@ -378,6 +378,8 @@ export function JournalDayClient({ entry: initialEntry, trades: initialTrades, a
   const [deleting, setDeleting]     = useState(false);
   const [uploading, setUploading] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [newSetup, setNewSetup] = useState("");
+  const [addingSetup, setAddingSetup] = useState(false);
   const supabase = createClient();
 
   const screenshots: string[] = entry?.screenshot_urls ?? [];
