@@ -161,14 +161,6 @@ export function DashboardStats({
   }, [accounts, acctTab]);
 
 
-
-  // ── Today's P&L for active tab ────────────────────────────────────────────
-  const todayStr = new Date().toISOString().split("T")[0];
-  const todayTrades = trades.filter(t => t.trade_date === todayStr);
-  const todayNet    = todayTrades.reduce((s, t) => s + t.pnl - t.commission, 0);
-  const todayWins   = todayTrades.filter(t => t.pnl > 0).length;
-  const todayLosses = todayTrades.filter(t => t.pnl < 0).length;
-
   // ── Blown/active account stats (for eval/funded tabs) ─────────────────────
   const acctStats = useMemo(() => {
     const accs = accountsOfType;
@@ -214,6 +206,13 @@ export function DashboardStats({
       return d >= from! && d <= to!;
     });
   }, [tradesForType, preset, customFrom, customTo]);
+
+  // ── Today's P&L for active tab ────────────────────────────────────────────
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayTrades = trades.filter(t => t.trade_date === todayStr);
+  const todayNet    = todayTrades.reduce((s, t) => s + t.pnl - t.commission, 0);
+  const todayWins   = todayTrades.filter(t => t.pnl > 0).length;
+  const todayLosses = todayTrades.filter(t => t.pnl < 0).length;
 
   // ── Stats ─────────────────────────────────────────────────────────────────
   const wins     = trades.filter(t => t.pnl > 0);
