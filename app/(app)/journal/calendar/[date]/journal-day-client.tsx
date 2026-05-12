@@ -267,7 +267,7 @@ function EntryEditorModal({ date, existing, onClose, onSaved, strategies = [] }:
     <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{existing ? "Edit" : "New"} Journal Entry — {date}</DialogTitle>
+          <DialogTitle>{existing ? "Edit" : "New"} Journal Entry — {new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
@@ -364,11 +364,11 @@ function EntryEditorModal({ date, existing, onClose, onSaved, strategies = [] }:
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wide">Pre-Market Plan</Label>
-              <Textarea value={form.plan} onChange={e => setForm(f => ({ ...f, plan: e.target.value }))} placeholder="Key levels, bias reasoning, setups to watch..." rows={4} />
+              <Textarea value={form.plan} onChange={e => setForm(f => ({ ...f, plan: e.target.value }))} placeholder="Key levels, bias reasoning, setups to watch..." rows={8} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wide">Post-Session Notes</Label>
-              <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="What happened, mistakes, what you did well..." rows={4} />
+              <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="What happened, mistakes, what you did well..." rows={8} />
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
