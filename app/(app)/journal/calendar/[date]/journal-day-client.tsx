@@ -464,18 +464,6 @@ export function JournalDayClient({ entry: initialEntry, trades: initialTrades, a
     setEntry(null);
   }
 
-  function handleScreenshotUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    files.forEach(file => {
-      const url = URL.createObjectURL(file);
-      setScreenshots(prev => [...prev, { url, name: file.name }]);
-    });
-  }
-
-  function removeScreenshot(idx: number) {
-    setScreenshots(prev => prev.filter((_, i) => i !== idx));
-  }
-
   // Build setup options: strategies from DB + fallback hardcoded list
   const setupOptions = strategies.length > 0
     ? strategies.map(s => s.name)
