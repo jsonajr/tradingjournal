@@ -119,13 +119,13 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
               >×</button>
             </div>
 
-            {/* Body: two columns — fixed height so divider matches */}
-            <div className="flex overflow-hidden" style={{ height: "420px" }}>
+            {/* Body: two columns — height driven by content, not fixed */}
+            <div className="flex" style={{ maxHeight: "70vh", minHeight: 0 }}>
 
               {/* Left — summary */}
               <div
-                className="flex flex-col items-center justify-center px-12 shrink-0"
-                style={{ width: "380px", borderRight: "1px solid rgba(255,255,255,0.08)" }}
+                className="flex flex-col items-center justify-start text-center px-12 py-10 shrink-0 self-stretch"
+                style={{ width: "55%", borderRight: "1px solid rgba(255,255,255,0.08)" }}
               >
                 <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">
                   Today&apos;s P&L
@@ -146,11 +146,8 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
                       <span className="text-muted-foreground">·</span>
                       <span className="text-muted-foreground">{todayCount} trades</span>
                     </div>
-                    <div className="mt-6 w-full rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Win rate</div>
-                      <div className="text-2xl font-bold text-foreground">
-                        {Math.round((todayWins / todayCount) * 100)}%
-                      </div>
+                    <div className="mt-2.5 text-[11px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.22)" }}>
+                      Win Rate <span style={{ color: "rgba(255,255,255,0.38)", fontWeight: 500 }}>{Math.round((todayWins / todayCount) * 100)}%</span>
                     </div>
                   </>
                 ) : (
@@ -158,15 +155,15 @@ function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab, 
                 )}
               </div>
 
-              {/* Right — per-account list, scrolls internally */}
-              <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+              {/* Right — per-account list */}
+              <div className="flex flex-col flex-1 min-w-0">
                 <div
                   className="px-6 py-3 shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
                   style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
                 >
                   Accounts
                 </div>
-                <div className="overflow-y-auto flex-1">
+                <div className="overflow-y-auto">
                   {accountRows.length === 0 ? (
                     <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No accounts found</div>
                   ) : (
