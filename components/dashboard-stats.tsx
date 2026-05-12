@@ -45,6 +45,80 @@ function fmtCompact(n: number, signed = false): string {
 
 
 
+
+/* ── PnL Card Button ─────────────────────────────────────────────────────── */
+function PnlCardButton({ todayNet, todayWins, todayLosses, todayCount, acctTab }: {
+  todayNet: number; todayWins: number; todayLosses: number; todayCount: number; acctTab: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const isPos = todayNet >= 0;
+  const fmt = (n: number) => "$" + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground"
+      >
+        <span className="text-sm">💰</span> P&L Card
+      </button>
+
+      {open && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          {/* Card */}
+          <div className="absolute right-0 top-10 z-50 w-72 rounded-2xl shadow-2xl overflow-hidden"
+            style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+            {/* Header bar */}
+            <div className="flex items-center justify-between px-4 py-2.5"
+              style={{ background: "hsl(223,26%,14%)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="flex items-center gap-2">
+                <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary">T</div>
+                <div>
+                  <div className="text-xs font-semibold text-foreground leading-none">Tradiator</div>
+                  <div className="text-[9px] text-muted-foreground">{acctTab ? acctTab.charAt(0).toUpperCase() + acctTab.slice(1) : "All"} accounts</div>
+                </div>
+              </div>
+              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none">×</button>
+            </div>
+
+            {/* P&L body */}
+            <div className="flex flex-col items-center justify-center py-8 px-6"
+              style={{ background: "hsl(224,27%,8%)" }}>
+              <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                Today&apos;s P&L
+              </div>
+              <div className={`text-4xl font-black tabular-nums leading-none ${isPos ? "text-green-400" : "text-red-400"}`}
+                style={{ textShadow: isPos ? "0 0 40px rgba(74,222,128,0.35)" : "0 0 40px rgba(248,113,113,0.35)" }}>
+                {todayCount === 0 ? "$0.00" : `${isPos ? "" : "-"}${fmt(todayNet)}`}
+              </div>
+              {todayCount > 0 && (
+                <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="text-green-400 font-semibold">{todayWins}W</span>
+                  <span>·</span>
+                  <span className="text-red-400 font-semibold">{todayLosses}L</span>
+                  <span>·</span>
+                  <span>{todayCount} trades</span>
+                </div>
+              )}
+              {todayCount === 0 && (
+                <div className="mt-2 text-xs text-muted-foreground">No trades logged today</div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-center py-2"
+              style={{ background: "hsl(223,26%,14%)", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+              <span className="text-[9px] text-muted-foreground tracking-widest font-medium uppercase">Powered by Tradiator</span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function DashboardStats({
   allTrades,
   recentJournal,
@@ -86,6 +160,14 @@ export function DashboardStats({
     return accounts.filter(a => (a.type ?? "live") === acctTab);
   }, [accounts, acctTab]);
 
+
+
+  // ── Today's P&L for active tab ────────────────────────────────────────────
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayTrades = trades.filter(t => t.trade_date === todayStr);
+  const todayNet    = todayTrades.reduce((s, t) => s + t.pnl - t.commission, 0);
+  const todayWins   = todayTrades.filter(t => t.pnl > 0).length;
+  const todayLosses = todayTrades.filter(t => t.pnl < 0).length;
 
   // ── Blown/active account stats (for eval/funded tabs) ─────────────────────
   const acctStats = useMemo(() => {
@@ -176,7 +258,16 @@ export function DashboardStats({
           </h1>
           <p className="text-xs text-muted-foreground md:text-sm">Your trading overview</p>
         </div>
-        <QuickTradeWrapper accounts={accounts} userId={userId} popupEnabled={popupEnabled} />
+<div className="flex items-center gap-2">
+          <PnlCardButton
+            todayNet={todayNet}
+            todayWins={todayWins}
+            todayLosses={todayLosses}
+            todayCount={todayTrades.length}
+            acctTab={acctTab}
+          />
+          <QuickTradeWrapper accounts={accounts} userId={userId} popupEnabled={popupEnabled} />
+        </div>
       </div>
 
       {/* ── Account type toggle ── */}

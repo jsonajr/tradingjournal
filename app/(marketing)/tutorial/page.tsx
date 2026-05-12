@@ -180,7 +180,7 @@ export default function TutorialPage() {
           <p className="mt-4 text-base text-white/50 max-w-lg mx-auto">
             From your first login to reading your insights — everything you need to get the most out of Tradiator.
           </p>
-        </div>
+        </div>bgvjk
 
         {/* Quick nav */}
         <div className="mb-14 flex flex-wrap gap-2 justify-center">
